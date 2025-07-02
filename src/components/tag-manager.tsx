@@ -11,46 +11,24 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ERROR_MESSAGES, PLACEHOLDERS, PRESET_TAG_ICONS, TOAST_MESSAGES } from "@/constants";
+import type { Tag } from "@/types/tag.interface";
 import { Edit, Hash, Plus, Tag as TagIcon, Trash2 } from "lucide-react";
+import type React from "react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-interface Tag {
-  id: string;
-  name: string;
+interface TagWithCount extends Tag {
   icon?: string;
   _count: { bookmarks: number };
 }
 
-interface TagManagerProps {
-  tags: Tag[];
+interface Props {
+  tags: TagWithCount[];
   onUpdate: () => void;
 }
 
-const PRESET_TAG_ICONS = [
-  "🏷️",
-  "⭐",
-  "🔥",
-  "💡",
-  "🎯",
-  "📌",
-  "🚀",
-  "💎",
-  "🎨",
-  "🔧",
-  "📚",
-  "💻",
-  "🎵",
-  "🎮",
-  "🏠",
-  "💼",
-  "🍔",
-  "✈️",
-  "🏃",
-  "📱",
-];
-
-export function TagManager({ tags, onUpdate }: TagManagerProps) {
+const TagManager: React.FC<Props> = ({ tags, onUpdate }) => {
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
@@ -65,7 +43,7 @@ export function TagManager({ tags, onUpdate }: TagManagerProps) {
     }
 
     // In real implementation, this would call the API
-    toast.success("Tag created successfully");
+    toast.success(TOAST_MESSAGES.TAG_CREATED);
     setFormData({ name: "", icon: "🏷️" });
     setIsCreating(false);
     onUpdate();
@@ -86,7 +64,7 @@ export function TagManager({ tags, onUpdate }: TagManagerProps) {
     }
 
     // In real implementation, this would call the API
-    toast.success("Tag updated successfully");
+    toast.success(TOAST_MESSAGES.TAG_UPDATED);
     setEditingTag(null);
     setFormData({ name: "", icon: "🏷️" });
     onUpdate();
@@ -234,4 +212,6 @@ export function TagManager({ tags, onUpdate }: TagManagerProps) {
       )}
     </div>
   );
-}
+};
+
+export default TagManager;

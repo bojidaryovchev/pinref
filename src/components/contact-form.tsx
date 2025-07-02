@@ -5,14 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { contactFormSchema, type ContactFormData } from "@/schemas/contact-form.schema";
+import { contactFormSchema, type ContactFormData } from "../schemas/contact-form.schema";
 import { Send } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { z } from "zod";
 
-const ContactForm: React.FC = () => {
+export const ContactForm = () => {
   const [formData, setFormData] = useState<ContactFormData>({
     name: "",
     email: "",

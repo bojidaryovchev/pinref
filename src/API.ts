@@ -3,12 +3,7 @@
 import { SendEmailCommand, SESv2Client } from "@aws-sdk/client-sesv2";
 import { Resource } from "sst";
 import { CONTACT_EMAIL } from "./constants";
-
-interface ContactFormPayload {
-  name: string;
-  email: string;
-  message: string;
-}
+import type { ContactFormPayload } from "@/types/contact-form-payload.interface";
 
 export const sendContactFormEmail = async ({ name, email, message }: ContactFormPayload) => {
   const client = new SESv2Client();

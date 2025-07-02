@@ -3,22 +3,24 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { PLACEHOLDERS, SEARCH_DEBOUNCE_MS } from "@/constants";
 import { Search, X } from "lucide-react";
+import type React from "react";
 import { useEffect, useState } from "react";
 
-interface SearchBarProps {
+interface Props {
   onSearch: (query: string) => void;
   placeholder?: string;
   className?: string;
 }
 
-export function SearchBar({ onSearch, placeholder = "Search bookmarks...", className }: SearchBarProps) {
+const SearchBar: React.FC<Props> = ({ onSearch, placeholder = PLACEHOLDERS.SEARCH_BOOKMARKS, className }) => {
   const [query, setQuery] = useState("");
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       onSearch(query);
-    }, 300);
+    }, SEARCH_DEBOUNCE_MS);
 
     return () => clearTimeout(timeoutId);
   }, [query, onSearch]);
@@ -50,4 +52,6 @@ export function SearchBar({ onSearch, placeholder = "Search bookmarks...", class
       )}
     </div>
   );
-}
+};
+
+export default SearchBar;

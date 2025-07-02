@@ -11,60 +11,23 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { Category } from "@/types/category.interface";
+import { PRESET_COLORS, PRESET_ICONS, ERROR_MESSAGES, TOAST_MESSAGES, PLACEHOLDERS } from "@/constants";
 import { Edit, Palette, Plus, Trash2 } from "lucide-react";
+import type React from "react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-interface Category {
-  id: string;
-  name: string;
-  icon: string;
-  color: string;
+interface CategoryWithCount extends Category {
   _count: { bookmarks: number };
 }
 
-interface CategoryManagerProps {
-  categories: Category[];
+interface Props {
+  categories: CategoryWithCount[];
   onUpdate: () => void;
 }
 
-const PRESET_COLORS = [
-  "#3b82f6",
-  "#8b5cf6",
-  "#ef4444",
-  "#10b981",
-  "#f59e0b",
-  "#06b6d4",
-  "#ec4899",
-  "#84cc16",
-  "#f97316",
-  "#6366f1",
-];
-
-const PRESET_ICONS = [
-  "💻",
-  "🎨",
-  "📰",
-  "📚",
-  "🔧",
-  "🎵",
-  "🎮",
-  "🏠",
-  "💼",
-  "🍔",
-  "✈️",
-  "🏃",
-  "📱",
-  "🔬",
-  "🎬",
-  "📊",
-  "🛒",
-  "🎯",
-  "🔒",
-  "⚡",
-];
-
-export function CategoryManager({ categories, onUpdate }: CategoryManagerProps) {
+const CategoryManager: React.FC<Props> = ({ categories, onUpdate }) => {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
@@ -75,12 +38,12 @@ export function CategoryManager({ categories, onUpdate }: CategoryManagerProps) 
 
   const handleCreate = () => {
     if (!formData.name.trim()) {
-      toast.error("Category name is required");
+      toast.error(ERROR_MESSAGES.CATEGORY_NAME_REQUIRED);
       return;
     }
 
     // In real implementation, this would call the API
-    toast.success("Category created successfully");
+    toast.success(TOAST_MESSAGES.CATEGORY_CREATED);
     setFormData({ name: "", icon: "📁", color: "#3b82f6" });
     setIsCreating(false);
     onUpdate();
@@ -108,9 +71,9 @@ export function CategoryManager({ categories, onUpdate }: CategoryManagerProps) 
     onUpdate();
   };
 
-  const handleDelete = (categoryId: string) => {
+  const handleDelete = () => {
     // In real implementation, this would call the API
-    toast.success("Category deleted successfully");
+    toast.success(TOAST_MESSAGES.CATEGORY_DELETED);
     onUpdate();
   };
 
@@ -122,7 +85,7 @@ export function CategoryManager({ categories, onUpdate }: CategoryManagerProps) 
           id="name"
           value={formData.name}
           onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-          placeholder="Enter category name"
+          placeholder={PLACEHOLDERS.CATEGORY_NAME}
         />
       </div>
 
@@ -132,7 +95,7 @@ export function CategoryManager({ categories, onUpdate }: CategoryManagerProps) 
           <Input
             value={formData.icon}
             onChange={(e) => setFormData((prev) => ({ ...prev, icon: e.target.value }))}
-            placeholder="Enter emoji or icon"
+            placeholder={PLACEHOLDERS.CATEGORY_ICON}
             className="text-center text-lg"
           />
           <div className="grid grid-cols-10 gap-2">
@@ -266,7 +229,7 @@ export function CategoryManager({ categories, onUpdate }: CategoryManagerProps) 
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleDelete(category.id)}
+                onClick={() => handleDelete()}
                 className="text-destructive hover:text-destructive"
               >
                 <Trash2 className="h-4 w-4" />
@@ -284,4 +247,6 @@ export function CategoryManager({ categories, onUpdate }: CategoryManagerProps) 
       )}
     </div>
   );
-}
+};
+
+export default CategoryManager;

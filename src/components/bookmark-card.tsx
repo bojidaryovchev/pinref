@@ -4,38 +4,20 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import type { Bookmark } from "@/types/bookmark.interface";
 import { Edit, ExternalLink, Folder, Heart, Tag, Trash2 } from "lucide-react";
 import Image from "next/image";
+import type React from "react";
 import { useState } from "react";
 
-interface BookmarkCardProps {
-  bookmark: {
-    id: string;
-    url: string;
-    title?: string;
-    description?: string;
-    image?: string;
-    favicon?: string;
-    domain?: string;
-    isFavorite: boolean;
-    category?: {
-      id: string;
-      name: string;
-      icon: string;
-      color: string;
-    };
-    tags: {
-      id: string;
-      name: string;
-    }[];
-    createdAt: string;
-  };
-  onEdit?: (bookmark: any) => void;
+interface Props {
+  bookmark: Bookmark;
+  onEdit?: (bookmark: Bookmark) => void;
   onDelete?: (id: string) => void;
   onToggleFavorite?: (id: string, isFavorite: boolean) => void;
 }
 
-export function BookmarkCard({ bookmark, onEdit, onDelete, onToggleFavorite }: BookmarkCardProps) {
+const BookmarkCard: React.FC<Props> = ({ bookmark, onEdit, onDelete, onToggleFavorite }) => {
   const [imageError, setImageError] = useState(false);
 
   const handleImageError = () => {
@@ -171,4 +153,6 @@ export function BookmarkCard({ bookmark, onEdit, onDelete, onToggleFavorite }: B
       </CardContent>
     </Card>
   );
-}
+};
+
+export default BookmarkCard;

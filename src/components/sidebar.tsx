@@ -1,27 +1,28 @@
 "use client";
 
-import { SettingsDialog } from "@/components/settings-dialog";
+import SettingsDialog from "@/components/settings-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { BookOpen, Filter, Heart, LogOut, Tag, User } from "lucide-react";
+import type { Category } from "@/types/category.interface";
+import type { Tag } from "@/types/tag.interface";
+import { BookOpen, Filter, Heart, LogOut, Tag as TagIcon, User } from "lucide-react";
+import type React from "react";
 import { useState } from "react";
 
-interface SidebarProps {
-  categories: Array<{
-    id: string;
-    name: string;
-    icon: string;
-    color: string;
-    _count: { bookmarks: number };
-  }>;
-  tags: Array<{
-    id: string;
-    name: string;
-    _count: { bookmarks: number };
-  }>;
+interface CategoryWithCount extends Category {
+  _count: { bookmarks: number };
+}
+
+interface TagWithCount extends Tag {
+  _count: { bookmarks: number };
+}
+
+interface Props {
+  categories: CategoryWithCount[];
+  tags: TagWithCount[];
   selectedCategory?: string;
   selectedTag?: string;
   showFavorites: boolean;
@@ -31,7 +32,7 @@ interface SidebarProps {
   onShowAll: () => void;
 }
 
-export function Sidebar({
+const Sidebar: React.FC<Props> = ({
   categories,
   tags,
   selectedCategory,
@@ -41,7 +42,7 @@ export function Sidebar({
   onTagSelect,
   onFavoritesToggle,
   onShowAll,
-}: SidebarProps) {
+}: Props) => {
   // Mock session for demo
   const session = { user: { id: "temp-user", name: "Demo User", email: "demo@example.com", image: null } };
   const [collapsed, setCollapsed] = useState(false);
@@ -153,7 +154,7 @@ export function Sidebar({
                   className="w-full justify-start gap-3"
                   onClick={() => onTagSelect(tag.id)}
                 >
-                  <Tag className="h-4 w-4" />
+                  <TagIcon className="h-4 w-4" />
                   {!collapsed && (
                     <>
                       <span className="truncate">{tag.name}</span>
@@ -207,4 +208,6 @@ export function Sidebar({
       </div>
     </div>
   );
-}
+};
+
+export default Sidebar;

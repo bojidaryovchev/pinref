@@ -7,6 +7,16 @@ import {
   QueryCommand,
   UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
+import { ENTITY_TYPES, TABLE_NAME, SEARCH_RESULTS_LIMIT } from "@/constants";
+import type { BookmarkData } from "@/types/bookmark-data.interface";
+import type { BookmarkUpdateData } from "@/types/bookmark-update-data.interface";
+import type { BookmarkWithScore } from "@/types/bookmark-with-score.interface";
+import type { CategoryData } from "@/types/category-data.interface";
+import type { DynamoDBParams } from "@/types/dynamodb-params.interface";
+import type { QueryOptions } from "@/types/query-options.interface";
+import type { QueryResult } from "@/types/query-result.interface";
+import type { TagData } from "@/types/tag-data.interface";
+import type { UserData } from "@/types/user-data.interface";
 
 export const client = new DynamoDBClient({
   region: process.env.AWS_REGION || "us-east-1",
@@ -18,17 +28,6 @@ export const client = new DynamoDBClient({
 
 export const dynamodb = DynamoDBDocumentClient.from(client);
 
-// Table name
-export const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || "bookmark-manager";
-
-// Entity types
-export const ENTITY_TYPES = {
-  USER: "USER",
-  BOOKMARK: "BOOKMARK",
-  CATEGORY: "CATEGORY",
-  TAG: "TAG",
-} as const;
-
 // Key patterns for single-table design
 export const createPK = (entityType: string, id: string) => `${entityType}#${id}`;
 export const createSK = (entityType: string, id?: string) => (id ? `${entityType}#${id}` : entityType);
@@ -39,7 +38,7 @@ export const createGSI1SK = (entityType: string, createdAt?: string) =>
   createdAt ? `${entityType}#${createdAt}` : entityType;
 
 // User operations
-export async function createUser(userData: { id: string; email: string; name?: string; image?: string }) {
+export const createUser = async (userData: UserData) => {
   const item = {
     PK: createPK(ENTITY_TYPES.USER, userData.id),
     SK: createSK(ENTITY_TYPES.USER),
@@ -62,9 +61,9 @@ export async function createUser(userData: { id: string; email: string; name?: s
   );
 
   return item;
-}
+};
 
-export async function getUser(userId: string) {
+export const getUser = async (userId: string) => {
   const result = await dynamodb.send(
     new GetCommand({
       TableName: TABLE_NAME,
@@ -76,23 +75,10 @@ export async function getUser(userId: string) {
   );
 
   return result.Item;
-}
+};
 
 // Bookmark operations
-export async function createBookmark(bookmarkData: {
-  id: string;
-  userId: string;
-  url: string;
-  title?: string;
-  description?: string;
-  image?: string;
-  favicon?: string;
-  domain?: string;
-  categoryId?: string;
-  tagIds?: string[];
-  isFavorite?: boolean;
-  searchTokens?: string[];
-}) {
+export const createBookmark = async (bookmarkData: BookmarkData) => {
   const now = new Date().toISOString();
 
   const item = {
@@ -127,16 +113,11 @@ export async function createBookmark(bookmarkData: {
   return item;
 }
 
-export async function getUserBookmarks(
+export const getUserBookmarks = async (
   userId: string,
-  options: {
-    limit?: number;
-    lastEvaluatedKey?: any;
-    categoryId?: string;
-    isFavorite?: boolean;
-  } = {},
-) {
-  const params: any = {
+  options: QueryOptions = {},
+): Promise<QueryResult<unknown>> => {
+  const params: DynamoDBParams = {
     TableName: TABLE_NAME,
     IndexName: "GSI1",
     KeyConditionExpression: "GSI1PK = :gsi1pk AND begins_with(GSI1SK, :gsi1sk)",
@@ -156,14 +137,20 @@ export async function getUserBookmarks(
   }
 
   // Add filters
-  const filterExpressions = [];
+  const filterExpressions: string[] = [];
   if (options.categoryId) {
     filterExpressions.push("categoryId = :categoryId");
+    if (!params.ExpressionAttributeValues) {
+      params.ExpressionAttributeValues = {};
+    }
     params.ExpressionAttributeValues[":categoryId"] = options.categoryId;
   }
 
   if (options.isFavorite !== undefined) {
     filterExpressions.push("isFavorite = :isFavorite");
+    if (!params.ExpressionAttributeValues) {
+      params.ExpressionAttributeValues = {};
+    }
     params.ExpressionAttributeValues[":isFavorite"] = options.isFavorite;
   }
 
@@ -178,19 +165,13 @@ export async function getUserBookmarks(
   };
 }
 
-export async function updateBookmark(
+export const updateBookmark = async (
   bookmarkId: string,
-  updates: {
-    title?: string;
-    description?: string;
-    categoryId?: string;
-    tagIds?: string[];
-    isFavorite?: boolean;
-  },
-) {
-  const updateExpressions = [];
-  const expressionAttributeValues: any = {};
-  const expressionAttributeNames: any = {};
+  updates: BookmarkUpdateData,
+) => {
+  const updateExpressions: string[] = [];
+  const expressionAttributeValues: Record<string, unknown> = {};
+  const expressionAttributeNames: Record<string, string> = {};
 
   Object.entries(updates).forEach(([key, value]) => {
     if (value !== undefined) {
@@ -221,7 +202,7 @@ export async function updateBookmark(
   return result.Attributes;
 }
 
-export async function deleteBookmark(bookmarkId: string) {
+export const deleteBookmark = async (bookmarkId: string) => {
   await dynamodb.send(
     new DeleteCommand({
       TableName: TABLE_NAME,
@@ -234,13 +215,7 @@ export async function deleteBookmark(bookmarkId: string) {
 }
 
 // Category operations
-export async function createCategory(categoryData: {
-  id: string;
-  userId: string;
-  name: string;
-  icon: string;
-  color: string;
-}) {
+export const createCategory = async (categoryData: CategoryData) => {
   const now = new Date().toISOString();
 
   const item = {
@@ -268,7 +243,7 @@ export async function createCategory(categoryData: {
   return item;
 }
 
-export async function getUserCategories(userId: string) {
+export const getUserCategories = async (userId: string) => {
   const result = await dynamodb.send(
     new QueryCommand({
       TableName: TABLE_NAME,
@@ -285,7 +260,7 @@ export async function getUserCategories(userId: string) {
 }
 
 // Tag operations
-export async function createTag(tagData: { id: string; userId: string; name: string; icon?: string }) {
+export const createTag = async (tagData: TagData) => {
   const now = new Date().toISOString();
 
   const item = {
@@ -312,7 +287,7 @@ export async function createTag(tagData: { id: string; userId: string; name: str
   return item;
 }
 
-export async function getUserTags(userId: string) {
+export const getUserTags = async (userId: string) => {
   const result = await dynamodb.send(
     new QueryCommand({
       TableName: TABLE_NAME,
@@ -329,17 +304,18 @@ export async function getUserTags(userId: string) {
 }
 
 // Enhanced search functionality with n-gram matching
-export async function searchBookmarks(userId: string, searchTokens: string[]) {
+export const searchBookmarks = async (userId: string, searchTokens: string[]): Promise<BookmarkWithScore[]> => {
   if (!searchTokens.length) return [];
 
-  const results = new Map();
+  const results = new Map<string, BookmarkWithScore>();
 
   // Search through user's bookmarks and score matches
   const allBookmarks = await getUserBookmarks(userId, { limit: 1000 });
 
   for (const bookmark of allBookmarks.items) {
+    const bookmarkRecord = bookmark as BookmarkWithScore;
     let score = 0;
-    const bookmarkTokens = bookmark.searchTokens || [];
+    const bookmarkTokens = bookmarkRecord.searchTokens || [];
 
     // Calculate match score based on token overlap
     for (const queryToken of searchTokens) {
@@ -358,12 +334,12 @@ export async function searchBookmarks(userId: string, searchTokens: string[]) {
     }
 
     if (score > 0) {
-      results.set(bookmark.id, { ...bookmark, searchScore: score });
+      results.set(bookmarkRecord.id, { ...bookmarkRecord, searchScore: score });
     }
   }
 
   // Sort by score (highest first) and return
   return Array.from(results.values())
     .sort((a, b) => b.searchScore - a.searchScore)
-    .slice(0, 50); // Limit results
+    .slice(0, SEARCH_RESULTS_LIMIT); // Limit results
 }

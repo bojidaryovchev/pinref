@@ -1,4 +1,5 @@
-import { dynamodb, TABLE_NAME } from "@/lib/dynamodb";
+import { TABLE_NAME } from "@/constants";
+import { dynamodb } from "@/lib/dynamodb";
 import { DynamoDBAdapter } from "@next-auth/dynamodb-adapter";
 import { NextAuthOptions } from "next-auth";
 import GitHubProvider from "next-auth/providers/github";

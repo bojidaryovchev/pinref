@@ -1,57 +1,34 @@
 "use client";
 
-import { AddBookmarkDialog } from "@/components/add-bookmark-dialog";
-import { BookmarkCard } from "@/components/bookmark-card";
-import { SearchBar } from "@/components/search-bar";
-import { Sidebar } from "@/components/sidebar";
+import AddBookmarkDialog from "@/components/add-bookmark-dialog";
+import BookmarkCard from "@/components/bookmark-card";
+import SearchBar from "@/components/search-bar";
+import Sidebar from "@/components/sidebar";
+import { AUTH_STATUS, MOCK_BOOKMARKS, MOCK_CATEGORIES, MOCK_TAGS, MOCK_USER_SESSION, TOAST_MESSAGES } from "@/constants";
+import type { Bookmark } from "@/types/bookmark.interface";
+import type { Category } from "@/types/category.interface";
+import type { Tag } from "@/types/tag.interface";
 import { BookOpen, Loader2 } from "lucide-react";
+import type React from "react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-interface Bookmark {
-  id: string;
-  url: string;
-  title?: string;
-  description?: string;
-  image?: string;
-  favicon?: string;
-  domain?: string;
-  isFavorite: boolean;
-  category?: {
-    id: string;
-    name: string;
-    icon: string;
-    color: string;
-  };
-  tags: {
-    id: string;
-    name: string;
-  }[];
-  createdAt: string;
-}
-
-interface Category {
-  id: string;
-  name: string;
-  icon: string;
-  color: string;
+interface CategoryWithCount extends Category {
   _count: { bookmarks: number };
 }
 
-interface Tag {
-  id: string;
-  name: string;
+interface TagWithCount extends Tag {
   _count: { bookmarks: number };
 }
 
-export default function Home() {
+const Home: React.FC = () => {
   // Temporarily disable auth - always show as authenticated
-  const session = { user: { id: "temp-user", name: "Demo User", email: "demo@example.com" } };
-  const status = "authenticated";
+  const session = MOCK_USER_SESSION;
+  const status = AUTH_STATUS.AUTHENTICATED;
 
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [tags, setTags] = useState<Tag[]>([]);
+  const [categories, setCategories] = useState<CategoryWithCount[]>([]);
+  const [tags, setTags] = useState<TagWithCount[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>();
@@ -59,7 +36,7 @@ export default function Home() {
   const [showFavorites, setShowFavorites] = useState(false);
 
   useEffect(() => {
-    if (status === "loading") return;
+    if (status === AUTH_STATUS.LOADING) return;
     if (!session) {
       setLoading(false);
       return;
@@ -76,109 +53,18 @@ export default function Home() {
   }, [session, searchQuery, selectedCategory, selectedTag, showFavorites]);
 
   const loadMockData = () => {
-    // Mock categories
-    const mockCategories: Category[] = [
-      { id: "1", name: "Development", icon: "💻", color: "#3b82f6", _count: { bookmarks: 5 } },
-      { id: "2", name: "Design", icon: "🎨", color: "#8b5cf6", _count: { bookmarks: 3 } },
-      { id: "3", name: "News", icon: "📰", color: "#ef4444", _count: { bookmarks: 2 } },
-      { id: "4", name: "Learning", icon: "📚", color: "#10b981", _count: { bookmarks: 4 } },
-    ];
-
-    // Mock tags
-    const mockTags: Tag[] = [
-      { id: "1", name: "React", _count: { bookmarks: 3 } },
-      { id: "2", name: "JavaScript", _count: { bookmarks: 4 } },
-      { id: "3", name: "CSS", _count: { bookmarks: 2 } },
-      { id: "4", name: "Tutorial", _count: { bookmarks: 3 } },
-      { id: "5", name: "Tools", _count: { bookmarks: 2 } },
-    ];
-
-    // Mock bookmarks
-    const mockBookmarks: Bookmark[] = [
-      {
-        id: "1",
-        url: "https://react.dev",
-        title: "React - The library for web and native user interfaces",
-        description: "React lets you build user interfaces out of individual pieces called components.",
-        image: "https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=800",
-        favicon: "https://react.dev/favicon.ico",
-        domain: "react.dev",
-        isFavorite: true,
-        category: mockCategories[0],
-        tags: [mockTags[0], mockTags[1]],
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: "2",
-        url: "https://tailwindcss.com",
-        title: "Tailwind CSS - Rapidly build modern websites",
-        description: "A utility-first CSS framework packed with classes that can be composed to build any design.",
-        image: "https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=800",
-        favicon: "https://tailwindcss.com/favicon.ico",
-        domain: "tailwindcss.com",
-        isFavorite: false,
-        category: mockCategories[1],
-        tags: [mockTags[2]],
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: "3",
-        url: "https://nextjs.org",
-        title: "Next.js by Vercel - The React Framework",
-        description:
-          "Used by some of the world's largest companies, Next.js enables you to create full-stack web applications.",
-        image: "https://images.pexels.com/photos/574071/pexels-photo-574071.jpeg?auto=compress&cs=tinysrgb&w=800",
-        favicon: "https://nextjs.org/favicon.ico",
-        domain: "nextjs.org",
-        isFavorite: true,
-        category: mockCategories[0],
-        tags: [mockTags[0], mockTags[1]],
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: "4",
-        url: "https://www.figma.com",
-        title: "Figma: The collaborative interface design tool",
-        description: "Build better products as a team. Design, prototype, and gather feedback all in one place.",
-        image: "https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=800",
-        favicon: "https://www.figma.com/favicon.ico",
-        domain: "figma.com",
-        isFavorite: false,
-        category: mockCategories[1],
-        tags: [mockTags[4]],
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: "5",
-        url: "https://developer.mozilla.org",
-        title: "MDN Web Docs",
-        description: "The MDN Web Docs site provides information about Open Web technologies.",
-        image: "https://images.pexels.com/photos/11035471/pexels-photo-11035471.jpeg?auto=compress&cs=tinysrgb&w=800",
-        favicon: "https://developer.mozilla.org/favicon.ico",
-        domain: "developer.mozilla.org",
-        isFavorite: true,
-        category: mockCategories[3],
-        tags: [mockTags[1], mockTags[3]],
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: "6",
-        url: "https://github.com",
-        title: "GitHub: Let's build from here",
-        description: "GitHub is where over 100 million developers shape the future of software, together.",
-        image: "https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=800",
-        favicon: "https://github.com/favicon.ico",
-        domain: "github.com",
-        isFavorite: false,
-        category: mockCategories[0],
-        tags: [mockTags[4]],
-        createdAt: new Date().toISOString(),
-      },
-    ];
-
-    setCategories(mockCategories);
-    setTags(mockTags);
-    setBookmarks(mockBookmarks);
+    setCategories(MOCK_CATEGORIES);
+    setTags(MOCK_TAGS);
+    
+    // Add missing category and tag references to bookmarks
+    const bookmarksWithReferences = MOCK_BOOKMARKS.map((bookmark, index) => ({
+      ...bookmark,
+      category: MOCK_CATEGORIES[index % MOCK_CATEGORIES.length],
+      tags: [MOCK_TAGS[index % MOCK_TAGS.length]],
+      createdAt: new Date().toISOString(),
+    }));
+    
+    setBookmarks(bookmarksWithReferences);
     setLoading(false);
   };
 
@@ -212,17 +98,17 @@ export default function Home() {
   };
 
   const handleBookmarkAdded = () => {
-    toast.success("Bookmark functionality will be available once auth is re-enabled");
+    toast.success(TOAST_MESSAGES.AUTH_TEMPORARILY_DISABLED);
   };
 
   const handleToggleFavorite = async (id: string, isFavorite: boolean) => {
     setBookmarks((prev) => prev.map((bookmark) => (bookmark.id === id ? { ...bookmark, isFavorite } : bookmark)));
-    toast.success(isFavorite ? "Added to favorites" : "Removed from favorites");
+    toast.success(isFavorite ? TOAST_MESSAGES.ADDED_TO_FAVORITES : TOAST_MESSAGES.REMOVED_FROM_FAVORITES);
   };
 
   const handleDeleteBookmark = async (id: string) => {
     setBookmarks((prev) => prev.filter((bookmark) => bookmark.id !== id));
-    toast.success("Bookmark deleted");
+    toast.success(TOAST_MESSAGES.BOOKMARK_DELETED);
   };
 
   const handleCategorySelect = (categoryId?: string) => {
@@ -333,4 +219,6 @@ export default function Home() {
       </div>
     </div>
   );
-}
+};
+
+export default Home;

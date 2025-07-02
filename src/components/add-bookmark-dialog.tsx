@@ -13,42 +13,30 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { bookmarkSchema, type BookmarkSchemaData } from "@/schemas/bookmark.schema";
+import { ERROR_MESSAGES, PLACEHOLDERS, TOAST_MESSAGES } from "@/constants";
+import type { Category } from "@/types/category.interface";
+import type { Tag } from "@/types/tag.interface";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Plus } from "lucide-react";
+import type React from "react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { z } from "zod";
 
-const addBookmarkSchema = z.object({
-  url: z.string().url("Please enter a valid URL"),
-  categoryId: z.string().optional(),
-  tagIds: z.array(z.string()).optional(),
-});
-
-type AddBookmarkData = z.infer<typeof addBookmarkSchema>;
-
-interface AddBookmarkDialogProps {
-  categories: Array<{
-    id: string;
-    name: string;
-    icon: string;
-    color: string;
-  }>;
-  tags: Array<{
-    id: string;
-    name: string;
-  }>;
+interface Props {
+  categories: Category[];
+  tags: Tag[];
   onBookmarkAdded: () => void;
 }
 
-export function AddBookmarkDialog({ categories, tags, onBookmarkAdded }: AddBookmarkDialogProps) {
+const AddBookmarkDialog: React.FC<Props> = ({ categories, tags, onBookmarkAdded }) => {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  const form = useForm<AddBookmarkData>({
-    resolver: zodResolver(addBookmarkSchema),
+  const form = useForm<BookmarkSchemaData>({
+    resolver: zodResolver(bookmarkSchema),
     defaultValues: {
       url: "",
       categoryId: "",
@@ -56,7 +44,7 @@ export function AddBookmarkDialog({ categories, tags, onBookmarkAdded }: AddBook
     },
   });
 
-  const onSubmit = async (data: AddBookmarkData) => {
+  const onSubmit = async (data: BookmarkSchemaData) => {
     setIsLoading(true);
     try {
       const response = await fetch("/api/bookmarks", {
@@ -75,13 +63,13 @@ export function AddBookmarkDialog({ categories, tags, onBookmarkAdded }: AddBook
         throw new Error(error.error || "Failed to add bookmark");
       }
 
-      toast.success("Bookmark added successfully!");
+      toast.success(TOAST_MESSAGES.BOOKMARK_ADDED);
       form.reset();
       setSelectedTags([]);
       setOpen(false);
       onBookmarkAdded();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to add bookmark");
+      toast.error(error instanceof Error ? error.message : ERROR_MESSAGES.BOOKMARK_ADD_FAILED);
     } finally {
       setIsLoading(false);
     }
@@ -110,7 +98,7 @@ export function AddBookmarkDialog({ categories, tags, onBookmarkAdded }: AddBook
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="url">URL</Label>
-            <Input id="url" placeholder="https://example.com" {...form.register("url")} />
+            <Input id="url" placeholder={PLACEHOLDERS.URL_INPUT} {...form.register("url")} />
             {form.formState.errors.url && (
               <p className="text-destructive text-sm">{form.formState.errors.url.message}</p>
             )}
@@ -121,7 +109,7 @@ export function AddBookmarkDialog({ categories, tags, onBookmarkAdded }: AddBook
               <Label>Category (optional)</Label>
               <Select value={form.watch("categoryId")} onValueChange={(value) => form.setValue("categoryId", value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a category" />
+                  <SelectValue placeholder={PLACEHOLDERS.SELECT_CATEGORY} />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((category) => (
@@ -170,4 +158,6 @@ export function AddBookmarkDialog({ categories, tags, onBookmarkAdded }: AddBook
       </DialogContent>
     </Dialog>
   );
-}
+};
+
+export default AddBookmarkDialog;

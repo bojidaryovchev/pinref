@@ -1,7 +1,7 @@
 "use client";
 
-import { CategoryManager } from "@/components/category-manager";
-import { TagManager } from "@/components/tag-manager";
+import CategoryManager from "@/components/category-manager";
+import TagManager from "@/components/tag-manager";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,28 +15,29 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { Category } from "@/types/category.interface";
+import type { Tag } from "@/types/tag.interface";
 import { Database, Palette, Settings, Shield, User } from "lucide-react";
+import type React from "react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-interface SettingsDialogProps {
-  categories: Array<{
-    id: string;
-    name: string;
-    icon: string;
-    color: string;
-    _count: { bookmarks: number };
-  }>;
-  tags: Array<{
-    id: string;
-    name: string;
-    _count: { bookmarks: number };
-  }>;
+interface CategoryWithCount extends Category {
+  _count: { bookmarks: number };
+}
+
+interface TagWithCount extends Tag {
+  _count: { bookmarks: number };
+}
+
+interface Props {
+  categories: CategoryWithCount[];
+  tags: TagWithCount[];
   onCategoriesUpdate: () => void;
   onTagsUpdate: () => void;
 }
 
-export function SettingsDialog({ categories, tags, onCategoriesUpdate, onTagsUpdate }: SettingsDialogProps) {
+const SettingsDialog: React.FC<Props> = ({ categories, tags, onCategoriesUpdate, onTagsUpdate }) => {
   const [open, setOpen] = useState(false);
   const [settings, setSettings] = useState({
     encryptData: true,
@@ -252,4 +253,6 @@ export function SettingsDialog({ categories, tags, onCategoriesUpdate, onTagsUpd
       </DialogContent>
     </Dialog>
   );
-}
+};
+
+export default SettingsDialog;
