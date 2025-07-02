@@ -1,8 +1,8 @@
-import { SITE_DESCRIPTION, SITE_TITLE, TOASTER_DURATION_MS } from "@/constants";
+import { Providers } from "@/components/providers";
+import { SITE_DESCRIPTION, SITE_TITLE } from "@/constants";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import React, { PropsWithChildren } from "react";
-import { Toaster } from "react-hot-toast";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -25,15 +25,7 @@ const RootLayout: React.FC<PropsWithChildren> = ({ children }) => {
     <>
       <html lang="en">
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-          {children}
-          <Toaster
-            toastOptions={{
-              style: {
-                fontSize: "0.875rem",
-              },
-              duration: TOASTER_DURATION_MS,
-            }}
-          />
+          <Providers>{children}</Providers>
         </body>
       </html>
     </>

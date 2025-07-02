@@ -1,0 +1,287 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Edit, Palette, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import toast from "react-hot-toast";
+
+interface Category {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  _count: { bookmarks: number };
+}
+
+interface CategoryManagerProps {
+  categories: Category[];
+  onUpdate: () => void;
+}
+
+const PRESET_COLORS = [
+  "#3b82f6",
+  "#8b5cf6",
+  "#ef4444",
+  "#10b981",
+  "#f59e0b",
+  "#06b6d4",
+  "#ec4899",
+  "#84cc16",
+  "#f97316",
+  "#6366f1",
+];
+
+const PRESET_ICONS = [
+  "💻",
+  "🎨",
+  "📰",
+  "📚",
+  "🔧",
+  "🎵",
+  "🎮",
+  "🏠",
+  "💼",
+  "🍔",
+  "✈️",
+  "🏃",
+  "📱",
+  "🔬",
+  "🎬",
+  "📊",
+  "🛒",
+  "🎯",
+  "🔒",
+  "⚡",
+];
+
+export function CategoryManager({ categories, onUpdate }: CategoryManagerProps) {
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    icon: "📁",
+    color: "#3b82f6",
+  });
+
+  const handleCreate = () => {
+    if (!formData.name.trim()) {
+      toast.error("Category name is required");
+      return;
+    }
+
+    // In real implementation, this would call the API
+    toast.success("Category created successfully");
+    setFormData({ name: "", icon: "📁", color: "#3b82f6" });
+    setIsCreating(false);
+    onUpdate();
+  };
+
+  const handleEdit = (category: Category) => {
+    setEditingCategory(category);
+    setFormData({
+      name: category.name,
+      icon: category.icon,
+      color: category.color,
+    });
+  };
+
+  const handleUpdate = () => {
+    if (!formData.name.trim()) {
+      toast.error("Category name is required");
+      return;
+    }
+
+    // In real implementation, this would call the API
+    toast.success("Category updated successfully");
+    setEditingCategory(null);
+    setFormData({ name: "", icon: "📁", color: "#3b82f6" });
+    onUpdate();
+  };
+
+  const handleDelete = (categoryId: string) => {
+    // In real implementation, this would call the API
+    toast.success("Category deleted successfully");
+    onUpdate();
+  };
+
+  const CategoryForm = () => (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="name">Category Name</Label>
+        <Input
+          id="name"
+          value={formData.name}
+          onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+          placeholder="Enter category name"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Icon</Label>
+        <div className="space-y-3">
+          <Input
+            value={formData.icon}
+            onChange={(e) => setFormData((prev) => ({ ...prev, icon: e.target.value }))}
+            placeholder="Enter emoji or icon"
+            className="text-center text-lg"
+          />
+          <div className="grid grid-cols-10 gap-2">
+            {PRESET_ICONS.map((icon) => (
+              <Button
+                key={icon}
+                variant={formData.icon === icon ? "default" : "outline"}
+                size="sm"
+                className="h-8 w-8 p-0 text-lg"
+                onClick={() => setFormData((prev) => ({ ...prev, icon }))}
+              >
+                {icon}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Color</Label>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded border" style={{ backgroundColor: formData.color }} />
+            <Input
+              type="color"
+              value={formData.color}
+              onChange={(e) => setFormData((prev) => ({ ...prev, color: e.target.value }))}
+              className="h-8 w-20 p-1"
+            />
+            <Input
+              value={formData.color}
+              onChange={(e) => setFormData((prev) => ({ ...prev, color: e.target.value }))}
+              placeholder="#3b82f6"
+              className="flex-1"
+            />
+          </div>
+          <div className="grid grid-cols-10 gap-2">
+            {PRESET_COLORS.map((color) => (
+              <Button
+                key={color}
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 border-2 p-0"
+                style={{
+                  backgroundColor: color,
+                  borderColor: formData.color === color ? "#000" : "transparent",
+                }}
+                onClick={() => setFormData((prev) => ({ ...prev, color }))}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          onClick={() => {
+            setIsCreating(false);
+            setEditingCategory(null);
+            setFormData({ name: "", icon: "📁", color: "#3b82f6" });
+          }}
+        >
+          Cancel
+        </Button>
+        <Button onClick={editingCategory ? handleUpdate : handleCreate}>
+          {editingCategory ? "Update" : "Create"} Category
+        </Button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Categories</h3>
+        <Dialog open={isCreating} onOpenChange={setIsCreating}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Category
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Category</DialogTitle>
+              <DialogDescription>
+                Add a new category to organize your bookmarks. You can use emojis or any Unicode character as icons.
+              </DialogDescription>
+            </DialogHeader>
+            <CategoryForm />
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <div className="space-y-2">
+        {categories.map((category) => (
+          <div key={category.id} className="flex items-center justify-between rounded-lg border p-3">
+            <div className="flex items-center gap-3">
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded font-medium text-white"
+                style={{ backgroundColor: category.color }}
+              >
+                {category.icon}
+              </div>
+              <div>
+                <p className="font-medium">{category.name}</p>
+                <p className="text-muted-foreground text-sm">{category._count.bookmarks} bookmarks</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Dialog
+                open={editingCategory?.id === category.id}
+                onOpenChange={(open) => !open && setEditingCategory(null)}
+              >
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="sm" onClick={() => handleEdit(category)}>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Edit Category</DialogTitle>
+                    <DialogDescription>Update the category name, icon, or color.</DialogDescription>
+                  </DialogHeader>
+                  <CategoryForm />
+                </DialogContent>
+              </Dialog>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDelete(category.id)}
+                className="text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {categories.length === 0 && (
+        <div className="text-muted-foreground py-8 text-center">
+          <Palette className="mx-auto mb-4 h-12 w-12 opacity-50" />
+          <p>No categories yet. Create your first category to get started!</p>
+        </div>
+      )}
+    </div>
+  );
+}
