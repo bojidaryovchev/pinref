@@ -1,7 +1,7 @@
 import { SEARCH_RESULTS_LIMIT } from "@/constants";
 import { authOptions } from "@/lib/auth";
 import { createBookmark, getUserBookmarks, searchBookmarks } from "@/lib/dynamodb";
-import { encryptBookmarkData } from "@/lib/encryption";
+import { decryptBookmarkData, encryptBookmarkData } from "@/lib/encryption";
 import { extractMetadata, generateQueryTokens, generateSearchTokens } from "@/lib/metadata";
 import { createBookmarkSchema } from "@/schemas/bookmark.schema";
 import { getServerSession } from "next-auth";
@@ -48,12 +48,38 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Decrypt sensitive data before returning
+    const decryptedBookmarks = bookmarks.map((bookmark) => {
+      const typedBookmark = bookmark as {
+        url?: string;
+        title?: string;
+        description?: string;
+        [key: string]: unknown;
+      };
+      
+      if (typedBookmark.url || typedBookmark.title || typedBookmark.description) {
+        const decryptedData = decryptBookmarkData({
+          url: typedBookmark.url || "",
+          title: typedBookmark.title,
+          description: typedBookmark.description,
+        });
+        
+        return {
+          ...typedBookmark,
+          url: decryptedData.url,
+          title: decryptedData.title,
+          description: decryptedData.description,
+        };
+      }
+      return typedBookmark;
+    });
+    
     return NextResponse.json({
-      bookmarks,
+      bookmarks: decryptedBookmarks,
       pagination: {
         page: 1,
         limit,
-        total: bookmarks.length,
+        total: decryptedBookmarks.length,
         totalPages: 1,
       },
     });
