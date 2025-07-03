@@ -66,8 +66,7 @@ For the authentication system to work properly, the following environment variab
 ```
 GOOGLE_CLIENT_ID=your_client_id
 GOOGLE_CLIENT_SECRET=your_client_secret
-NEXTAUTH_SECRET=your_random_secret_key
-NEXTAUTH_URL=https://your-domain.com (production only)
+AUTH_SECRET=your_random_secret_key
 ```
 
 ## Future Improvements

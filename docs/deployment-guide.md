@@ -39,14 +39,11 @@ This guide covers the complete deployment process for Pinref, including environm
    DYNAMODB_TABLE_NAME=pinref-bookmark-table-dev
 
    # Authentication Configuration
-   NEXTAUTH_SECRET=your_32_character_secret_for_local_dev
-   NEXTAUTH_URL=http://localhost:3000
+   AUTH_SECRET=your_32_character_secret_for_local_dev
 
    # OAuth Providers (get from respective platforms)
    GOOGLE_CLIENT_ID=your_google_client_id
    GOOGLE_CLIENT_SECRET=your_google_client_secret
-   GITHUB_CLIENT_ID=your_github_client_id
-   GITHUB_CLIENT_SECRET=your_github_client_secret
 
    # Security Configuration
    ENCRYPTION_KEY=your_32_character_encryption_key
@@ -83,23 +80,19 @@ AWS_REGION                 # AWS region (e.g., us-east-1)
 #### Production Environment Secrets
 
 ```
-NEXTAUTH_SECRET           # 32+ character random string
+AUTH_SECRET           # 32+ character random string
 ENCRYPTION_KEY           # 32+ character encryption key
 GOOGLE_CLIENT_ID         # Google OAuth client ID
 GOOGLE_CLIENT_SECRET     # Google OAuth client secret
-GITHUB_CLIENT_ID         # GitHub OAuth client ID
-GITHUB_CLIENT_SECRET     # GitHub OAuth client secret
 ```
 
 #### Development Environment Secrets (with \_DEV suffix)
 
 ```
-NEXTAUTH_SECRET_DEV      # Different secret for dev
+AUTH_SECRET_DEV      # Different secret for dev
 ENCRYPTION_KEY_DEV       # Different encryption key for dev
 GOOGLE_CLIENT_ID_DEV     # Dev OAuth credentials
 GOOGLE_CLIENT_SECRET_DEV
-GITHUB_CLIENT_ID_DEV
-GITHUB_CLIENT_SECRET_DEV
 ```
 
 ## OAuth Provider Setup

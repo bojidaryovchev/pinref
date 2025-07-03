@@ -16,7 +16,7 @@ import {
   updateTag,
   updateUserSettings,
 } from "@/API";
-import { API_ENDPOINTS, SWR_CONFIG } from "@/constants";
+import { SWR_CONFIG } from "@/constants";
 import type { Bookmark, BookmarkQueryOptions, CreateBookmarkInput } from "@/schemas/bookmark.schema";
 import type { Category, CreateCategoryInput } from "@/schemas/category.schema";
 import type { CreateTagInput, Tag } from "@/schemas/tag.schema";
@@ -38,7 +38,7 @@ export function useBookmarks(options: BookmarkQueryOptions = { limit: 20 }) {
   if (options.query) params.append("q", options.query);
 
   const queryString = params.toString();
-  const url = `${API_ENDPOINTS.BOOKMARKS}${queryString ? `?${queryString}` : ""}`;
+  const url = `/api/bookmarks${queryString ? `?${queryString}` : ""}`;
 
   const { data, error, isLoading, mutate } = useSWR<{
     bookmarks: Bookmark[];
@@ -104,7 +104,7 @@ export function useBookmarks(options: BookmarkQueryOptions = { limit: 20 }) {
  * Hook for categories data
  */
 export function useCategories() {
-  const { data, error, isLoading, mutate } = useSWR<Category[]>(API_ENDPOINTS.CATEGORIES, fetcher, {
+  const { data, error, isLoading, mutate } = useSWR<Category[]>("/api/categories", fetcher, {
     refreshInterval: SWR_CONFIG.REFRESH_INTERVAL,
     revalidateOnFocus: SWR_CONFIG.REVALIDATE_ON_FOCUS,
     revalidateOnReconnect: SWR_CONFIG.REVALIDATE_ON_RECONNECT,
@@ -151,7 +151,7 @@ export function useCategories() {
  * Hook for tags data
  */
 export function useTags() {
-  const { data, error, isLoading, mutate } = useSWR<Tag[]>(API_ENDPOINTS.TAGS, fetcher, {
+  const { data, error, isLoading, mutate } = useSWR<Tag[]>("/api/tags", fetcher, {
     refreshInterval: SWR_CONFIG.REFRESH_INTERVAL,
     revalidateOnFocus: SWR_CONFIG.REVALIDATE_ON_FOCUS,
     revalidateOnReconnect: SWR_CONFIG.REVALIDATE_ON_RECONNECT,
@@ -198,7 +198,7 @@ export function useTags() {
  * Hook for user settings data
  */
 export function useUserSettings() {
-  const { data, error, isLoading, mutate } = useSWR<UserSettings>(API_ENDPOINTS.USER_SETTINGS, fetcher, {
+  const { data, error, isLoading, mutate } = useSWR<UserSettings>("/api/user/settings", fetcher, {
     refreshInterval: SWR_CONFIG.REFRESH_INTERVAL,
     revalidateOnFocus: SWR_CONFIG.REVALIDATE_ON_FOCUS,
     revalidateOnReconnect: SWR_CONFIG.REVALIDATE_ON_RECONNECT,

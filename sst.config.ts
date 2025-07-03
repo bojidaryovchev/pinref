@@ -91,8 +91,9 @@ export default $config({
         ENCRYPTION_KEY: process.env.ENCRYPTION_KEY!,
         GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID!,
         GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET!,
-        NEXTAUTH_URL: `https://${domainName}`,
-        NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET!,
+        AUTH_SECRET: process.env.AUTH_SECRET!,
+        AUTH_TRUST_HOST: "true",
+        NEXT_PUBLIC_APP_URL: `https://${domainName}`,
       },
       link: [dynamoTable, ...identities],
     });

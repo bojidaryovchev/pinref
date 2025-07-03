@@ -91,19 +91,6 @@ export const PRESET_TAG_ICONS = [
 /** AWS configuration */
 export const AWS_REGION = process.env.AWS_REGION!;
 
-/** API endpoint URLs */
-export const API_ENDPOINTS = {
-  BOOKMARKS: "/api/bookmarks",
-  BOOKMARK_BY_ID: (id: string) => `/api/bookmarks/${id}`,
-  CATEGORIES: "/api/categories",
-  CATEGORY_BY_ID: (id: string) => `/api/categories/${id}`,
-  TAGS: "/api/tags",
-  TAG_BY_ID: (id: string) => `/api/tags/${id}`,
-  CONTACT: "/api/contact",
-  USER_SETTINGS: "/api/user/settings",
-  REBUILD_SEARCH_INDEX: "/api/search-index/rebuild",
-};
-
 /** SWR Configuration */
 export const SWR_CONFIG = {
   REFRESH_INTERVAL: 300000, // 5 minutes (reduced frequency)
@@ -113,15 +100,6 @@ export const SWR_CONFIG = {
   BOOKMARK_CACHE_KEY: "bookmarks",
   CATEGORY_CACHE_KEY: "categories",
   TAG_CACHE_KEY: "tags",
-};
-
-/** Cache tags for revalidation */
-export const CACHE_TAGS = {
-  BOOKMARKS: "bookmarks",
-  CATEGORIES: "categories",
-  TAGS: "tags",
-  USER_SETTINGS: "user-settings",
-  SEARCH_INDEX: "search-index",
 };
 
 /** Search configuration */

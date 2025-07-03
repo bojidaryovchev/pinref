@@ -24,7 +24,6 @@ We've implemented a comprehensive solution with these components:
 In `src/lib/env.ts`, we provide utilities for working with URLs:
 
 - `getSiteUrl()`: Determines the base URL based on the current environment:
-  - Uses `NEXTAUTH_URL` if available (set in SST config)
   - Falls back to environment-specific logic (dev vs production)
   - Properly handles different stages in the SST deployment
 
@@ -51,7 +50,6 @@ In `src/API.ts`, we've created a `resilientFetch` utility:
 
 The URL handling respects the following environment variables:
 
-- `NEXTAUTH_URL`: Primary URL for the application, set in SST config
 - `NODE_ENV`: Development vs production
 - `DEPLOYMENT_ENV`: The SST deployment stage (dev/prod)
 

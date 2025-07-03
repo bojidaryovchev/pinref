@@ -8,7 +8,8 @@ declare namespace NodeJS {
     ENCRYPTION_KEY: string;
     GOOGLE_CLIENT_ID: string;
     GOOGLE_CLIENT_SECRET: string;
-    NEXTAUTH_URL: string;
-    NEXTAUTH_SECRET: string;
+    AUTH_SECRET: string;
+    AUTH_TRUST_HOST: string;
+    NEXT_PUBLIC_APP_URL: string;
   }
 }

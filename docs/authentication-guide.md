@@ -63,7 +63,7 @@ For issues with the DynamoDB adapter:
 
 If JWT sessions aren't persisting:
 
-1. Verify `NEXTAUTH_SECRET` is set correctly
+1. Verify `AUTH_SECRET` is set correctly
 2. Check that the session strategy is set to "jwt"
 3. Ensure cookies are properly set and not blocked
 
@@ -85,11 +85,8 @@ The following environment variables must be set for authentication to work prope
 ```
 GOOGLE_CLIENT_ID=your_client_id
 GOOGLE_CLIENT_SECRET=your_client_secret
-NEXTAUTH_SECRET=your_random_secret_key
-NEXTAUTH_URL=https://your-domain.com (production only)
+AUTH_SECRET=your_random_secret_key
 ```
-
-For development, `NEXTAUTH_URL` is optional. For production, it must be set to your domain.
 
 ## API Credential Handling
 
