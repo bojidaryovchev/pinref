@@ -36,43 +36,50 @@ const setDefaultSidebarExpanded = (req: NextRequest, res: NextResponse) => {
 };
 
 export default auth((req) => {
-  const { pathname } = req.nextUrl;
-  const res = NextResponse.next();
+  try {
+    const { pathname } = req.nextUrl;
+    const res = NextResponse.next();
 
-  setPathnameHeader(res, pathname);
-  setDefaultTheme(req, res);
-  setDefaultSidebarExpanded(req, res);
+    setPathnameHeader(res, pathname);
+    setDefaultTheme(req, res);
+    setDefaultSidebarExpanded(req, res);
 
-  // Public paths that don't require authentication
-  const publicPaths = ["/api/auth", "/auth"];
+    // Public paths that don't require authentication
+    const publicPaths = ["/api/auth", "/auth"];
 
-  // Check if the path is public
-  const isPublicPath = publicPaths.some((publicPath) => pathname.startsWith(publicPath));
+    // Check if the path is public
+    const isPublicPath = publicPaths.some((publicPath) => pathname.startsWith(publicPath));
 
-  // If it's a public path, allow access
-  if (isPublicPath) {
-    return res;
-  }
-
-  // If user is not authenticated and trying to access protected route
-  if (!req.auth) {
-    // For API routes, return 401 instead of redirecting
-    if (pathname.startsWith("/api/")) {
-      return new NextResponse(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+    // If it's a public path, allow access
+    if (isPublicPath) {
+      return res;
     }
 
-    // Include the current path as returnUrl for post-login redirect
-    const returnUrl = encodeURIComponent(pathname);
-    const baseUrl = `${req.nextUrl.protocol}//${req.nextUrl.host}`;
-    return NextResponse.redirect(new URL(`/auth?returnUrl=${returnUrl}`, baseUrl));
-  }
+    // If user is not authenticated and trying to access protected route
+    if (!req.auth) {
+      // For API routes, return 401 instead of redirecting
+      if (pathname.startsWith("/api/")) {
+        return new NextResponse(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+      }
 
-  return res;
+      // Include the current path as returnUrl for post-login redirect
+      const returnUrl = encodeURIComponent(pathname);
+      const redirectUrl = new URL("/auth", req.nextUrl.origin);
+      redirectUrl.searchParams.set("returnUrl", returnUrl);
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    return res;
+  } catch (error) {
+    console.error("Middleware error:", error);
+    // Return a basic response to prevent the entire request from failing
+    return NextResponse.next();
+  }
 });
 
 // Configure which paths the middleware runs on
