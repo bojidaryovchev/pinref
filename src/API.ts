@@ -18,7 +18,7 @@ import { UserSettings } from "./schemas/user.schema";
 /**
  * Cache tag invalidation functions
  */
-export const invalidateBookmarksCache = () => {
+export const invalidateBookmarksCache = async () => {
   try {
     revalidateTag(CACHE_TAGS.BOOKMARKS);
     return true;
@@ -28,7 +28,7 @@ export const invalidateBookmarksCache = () => {
   }
 };
 
-export const invalidateCategoriesCache = () => {
+export const invalidateCategoriesCache = async () => {
   try {
     revalidateTag(CACHE_TAGS.CATEGORIES);
     return true;
@@ -38,7 +38,7 @@ export const invalidateCategoriesCache = () => {
   }
 };
 
-export const invalidateTagsCache = () => {
+export const invalidateTagsCache = async () => {
   try {
     revalidateTag(CACHE_TAGS.TAGS);
     return true;
@@ -48,7 +48,7 @@ export const invalidateTagsCache = () => {
   }
 };
 
-export const invalidateUserSettingsCache = () => {
+export const invalidateUserSettingsCache = async () => {
   try {
     revalidateTag(CACHE_TAGS.USER_SETTINGS);
     return true;
@@ -58,7 +58,7 @@ export const invalidateUserSettingsCache = () => {
   }
 };
 
-export const invalidateSearchIndexCache = () => {
+export const invalidateSearchIndexCache = async () => {
   try {
     revalidateTag(CACHE_TAGS.SEARCH_INDEX);
     return true;
