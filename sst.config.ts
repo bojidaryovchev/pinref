@@ -47,8 +47,13 @@ export default $config({
           rangeKey: "entityType",
           // This allows efficient querying of all entities by user and type
         },
+        SearchIndex: {
+          hashKey: "userId",
+          rangeKey: "searchTokens",
+          // This allows efficient searching by tokens for a specific user
+        }
       },
-      stream: "new-and-old-images", // For real-time updates and triggers
+      stream: "new-and-old-images" // For real-time updates and triggers
     });
 
     // Create a SES domain identity with DMARC policy for email sending
