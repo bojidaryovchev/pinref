@@ -1,36 +1,30 @@
 import { authOptions } from "@/lib/auth";
+import { createTag, getUserTags } from "@/lib/dynamodb";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 
 const createTagSchema = z.object({
   name: z.string().min(1).max(30),
 });
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const tags = await prisma.tag.findMany({
-      where: {
-        userId: session.user.id,
-      },
-      include: {
-        _count: {
-          select: {
-            bookmarks: true,
-          },
-        },
-      },
-      orderBy: {
-        name: "asc",
-      },
-    });
+    const tags = await getUserTags(session.user.email);
 
-    return NextResponse.json(tags);
+    // Add bookmark count (would need separate query in real implementation)
+    const tagsWithCount = tags.map((tag) => ({
+      ...tag,
+      _count: { bookmarks: 0 }, // Placeholder - implement actual counting
+    }));
+
+    return NextResponse.json(tagsWithCount);
   } catch (error) {
     console.error("Error fetching tags:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -40,18 +34,20 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
     const { name } = createTagSchema.parse(body);
 
-    const tag = await prisma.tag.create({
-      data: {
-        name,
-        userId: session.user.id,
-      },
+    const tagId = uuidv4();
+
+    const tag = await createTag({
+      id: tagId,
+      userId: session.user.email,
+      name,
+      icon: "🏷️", // Default icon
     });
 
     return NextResponse.json(tag, { status: 201 });

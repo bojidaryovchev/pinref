@@ -13,30 +13,28 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { bookmarkSchema, type BookmarkSchemaData } from "@/schemas/bookmark.schema";
+import { createBookmarkSchema, type CreateBookmarkInput } from "@/schemas/bookmark.schema";
 import { ERROR_MESSAGES, PLACEHOLDERS, TOAST_MESSAGES } from "@/constants";
-import type { Category } from "@/types/category.interface";
-import type { Tag } from "@/types/tag.interface";
+import { useBookmarks } from "@/hooks/use-api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Plus } from "lucide-react";
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
 interface Props {
-  categories: Category[];
-  tags: Tag[];
-  onBookmarkAdded: () => void;
+  categories: Array<{ id: string; name: string; icon?: string }>;
+  tags: Array<{ id: string; name: string }>;
 }
 
-const AddBookmarkDialog: React.FC<Props> = ({ categories, tags, onBookmarkAdded }) => {
+const AddBookmarkDialog: React.FC<Props> = ({ categories, tags }) => {
+  const { addBookmark } = useBookmarks();
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  const form = useForm<BookmarkSchemaData>({
-    resolver: zodResolver(bookmarkSchema),
+  const form = useForm<CreateBookmarkInput>({
+    resolver: zodResolver(createBookmarkSchema),
     defaultValues: {
       url: "",
       categoryId: "",
@@ -44,30 +42,23 @@ const AddBookmarkDialog: React.FC<Props> = ({ categories, tags, onBookmarkAdded 
     },
   });
 
-  const onSubmit = async (data: BookmarkSchemaData) => {
+  // Watch tagIds from form state
+  const selectedTags = form.watch("tagIds") || [];
+
+  // Reset form when dialog closes
+  useEffect(() => {
+    if (!open) {
+      form.reset();
+    }
+  }, [open, form]);
+
+  const onSubmit = async (data: CreateBookmarkInput) => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/bookmarks", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...data,
-          tagIds: selectedTags,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to add bookmark");
-      }
-
+      await addBookmark(data);
       toast.success(TOAST_MESSAGES.BOOKMARK_ADDED);
       form.reset();
-      setSelectedTags([]);
       setOpen(false);
-      onBookmarkAdded();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : ERROR_MESSAGES.BOOKMARK_ADD_FAILED);
     } finally {
@@ -76,7 +67,11 @@ const AddBookmarkDialog: React.FC<Props> = ({ categories, tags, onBookmarkAdded 
   };
 
   const handleTagToggle = (tagId: string) => {
-    setSelectedTags((prev) => (prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]));
+    const currentTags = form.getValues("tagIds") || [];
+    const newTags = currentTags.includes(tagId) 
+      ? currentTags.filter((id: string) => id !== tagId) 
+      : [...currentTags, tagId];
+    form.setValue("tagIds", newTags);
   };
 
   return (
@@ -91,7 +86,7 @@ const AddBookmarkDialog: React.FC<Props> = ({ categories, tags, onBookmarkAdded 
         <DialogHeader>
           <DialogTitle>Add New Bookmark</DialogTitle>
           <DialogDescription>
-            Paste a URL to save it to your bookmarks. We'll automatically extract title, description, and image.
+            Paste a URL to save it to your bookmarks. We&apos;ll automatically extract title, description, and image.
           </DialogDescription>
         </DialogHeader>
 
@@ -122,6 +117,9 @@ const AddBookmarkDialog: React.FC<Props> = ({ categories, tags, onBookmarkAdded 
                   ))}
                 </SelectContent>
               </Select>
+              {form.formState.errors.categoryId && (
+                <p className="text-destructive text-sm">{form.formState.errors.categoryId.message}</p>
+              )}
             </div>
           )}
 
@@ -135,6 +133,7 @@ const AddBookmarkDialog: React.FC<Props> = ({ categories, tags, onBookmarkAdded 
                       id={tag.id}
                       checked={selectedTags.includes(tag.id)}
                       onCheckedChange={() => handleTagToggle(tag.id)}
+                      disabled={isLoading}
                     />
                     <Label htmlFor={tag.id} className="text-sm">
                       {tag.name}
@@ -142,11 +141,19 @@ const AddBookmarkDialog: React.FC<Props> = ({ categories, tags, onBookmarkAdded 
                   </div>
                 ))}
               </div>
+              {form.formState.errors.tagIds && (
+                <p className="text-destructive text-sm">{form.formState.errors.tagIds.message}</p>
+              )}
             </div>
           )}
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setOpen(false)}
+              disabled={isLoading}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading}>

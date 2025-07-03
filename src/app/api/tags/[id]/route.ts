@@ -1,16 +1,13 @@
 import { authOptions } from "@/lib/auth";
-import { deleteBookmark, getUserBookmarks, updateBookmark } from "@/lib/dynamodb";
-import type { Bookmark } from "@/types/bookmark.interface";
+import { deleteTag, getUserTags, updateTag } from "@/lib/dynamodb";
+import { encryptTagData } from "@/lib/encryption";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-const updateBookmarkSchema = z.object({
-  title: z.string().optional(),
-  description: z.string().optional(),
-  categoryId: z.string().optional(),
-  tagIds: z.array(z.string()).optional(),
-  isFavorite: z.boolean().optional(),
+const updateTagSchema = z.object({
+  name: z.string().min(1).max(30).optional(),
+  icon: z.string().optional(),
 });
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
@@ -20,18 +17,17 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // For simplicity, get all user bookmarks and find the one we want
-    // In a real implementation, you'd want a getBookmarkById function
-    const result = await getUserBookmarks(session.user.email, { limit: 1000 });
-    const bookmark = (result.items as Bookmark[]).find((item) => item.id === params.id);
+    // For simplicity, get all user tags and find the one we want
+    const tags = await getUserTags(session.user.email);
+    const tag = tags.find((item) => item.id === params.id);
 
-    if (!bookmark) {
-      return NextResponse.json({ error: "Bookmark not found" }, { status: 404 });
+    if (!tag) {
+      return NextResponse.json({ error: "Tag not found" }, { status: 404 });
     }
 
-    return NextResponse.json(bookmark);
+    return NextResponse.json(tag);
   } catch (error) {
-    console.error("Error fetching bookmark:", error);
+    console.error("Error fetching tag:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -44,13 +40,18 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     const body = await request.json();
-    const updateData = updateBookmarkSchema.parse(body);
+    const updateData = updateTagSchema.parse(body);
 
-    const bookmark = await updateBookmark(params.id, updateData);
+    // Encrypt sensitive data if name is being updated
+    const processedData = updateData.name 
+      ? { ...updateData, name: encryptTagData({ name: updateData.name }).name }
+      : updateData;
 
-    return NextResponse.json(bookmark);
+    const tag = await updateTag(params.id, processedData);
+
+    return NextResponse.json(tag);
   } catch (error) {
-    console.error("Error updating bookmark:", error);
+    console.error("Error updating tag:", error);
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Invalid request data" }, { status: 400 });
     }
@@ -65,11 +66,11 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await deleteBookmark(params.id);
+    await deleteTag(params.id);
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting bookmark:", error);
+    console.error("Error deleting tag:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

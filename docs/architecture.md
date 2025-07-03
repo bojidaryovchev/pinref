@@ -78,7 +78,7 @@ isDeploymentEnv("prod"); // boolean check
 
 ```javascript
 // warmer.js - Custom warming script
-const URL_TO_VISIT = "https://yourdomain.com";
+const URL_TO_VISIT = "https://pinref.com";
 const CONCURRENT_VISITS = 100;
 
 // Run every 1 minute instead of default 5 minutes
@@ -105,7 +105,7 @@ setInterval(runConcurrentVisits, 60 * 1000);
 2. **Set contact email** in `src/constants.tsx`:
 
    ```typescript
-   export const CONTACT_EMAIL = "contact@yourcompany.com";
+   export const CONTACT_EMAIL = "support@pinref.com";
    ```
 
 3. **Deploy and verify** email identity in AWS Console
@@ -118,7 +118,7 @@ setInterval(runConcurrentVisits, 60 * 1000);
 
 ```typescript
 // sst.config.ts
-const domainName = isProd($app.stage) ? "yourdomain.com" : `${$app.stage}.yourdomain.com`;
+const domainName = isProd($app.stage) ? "pinref.com" : `${$app.stage}.pinref.com`;
 
 new sst.aws.Nextjs("NextApp", {
   domain: {

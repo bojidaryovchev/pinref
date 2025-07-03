@@ -1,37 +1,48 @@
-# Next.js SST Starter
+# Pinref - Visual Bookmark Manager
 
-A modern Next.js application starter with serverless AWS infrastructure using SST (Serverless Stack).
+A modern, secure, and intelligent bookmark management application built with Next.js and serverless AWS infrastructure using SST (Serverless Stack).
 
 ## Features
 
-- **📝 Contact Form**: Fully functional contact form with validation
+- **� Visual Bookmark Management**: Rich visual cards with automatic metadata extraction
 
-  - Name field (required)
-  - Email field (required)
-  - Message field (required)
-  - Real-time validation with Zod
-  - Toast notifications for user feedback
-  - Email delivery via AWS SES
+  - Automatic title, description, and image extraction
+  - Favicon and domain recognition  
+  - Favorites system for important bookmarks
+  - Responsive card-based interface
 
-- **🚀 Modern Stack**:
+- **🏷️ Smart Organization**:
 
-  - Next.js 15 with App Router
-  - TypeScript for full type safety
-  - Tailwind CSS v4 for styling
-  - shadcn/ui components
-  - React Hot Toast for notifications
-  - AWS SES for email functionality
+  - Categories with custom icons and colors
+  - Flexible tagging system
+  - Filter by category, tags, or favorites
+  - Real-time bookmark counts
+
+- **� Advanced Search**:
+
+  - N-gram based fuzzy search
+  - Typo-tolerant search queries
+  - Partial and autocomplete matching
+  - Multi-field search (title, description, domain)
+
+- **🔐 Security & Privacy**:
+
+  - End-to-end encryption of sensitive data
+  - User data isolation
+  - No tracking or external analytics
+  - GDPR-compliant design
 
 - **☁️ Serverless Infrastructure**:
 
-  - SST for AWS infrastructure as code
-  - Automated deployments with GitHub Actions
-  - Support for custom domains via Route53
+  - AWS DynamoDB for scalable data storage
+  - Lambda functions for serverless compute
+  - CloudFront CDN for global performance
+  - SST for infrastructure as code
 
 - **🛠️ Developer Experience**:
-  - ESLint + Prettier with pre-commit hooks
-  - Hot reload and fast development
-  - VS Code snippets for rapid component creation
+  - TypeScript for full type safety
+  - Modern React with Next.js App Router
+  - Tailwind CSS with shadcn/ui components
   - Comprehensive documentation
 
 ## Quick Start
@@ -49,7 +60,7 @@ A modern Next.js application starter with serverless AWS infrastructure using SS
 
    ```bash
    git clone <your-repo-url>
-   cd nextjs-sst-starter
+   cd pinref
    npm install
    ```
 
@@ -57,7 +68,7 @@ A modern Next.js application starter with serverless AWS infrastructure using SS
 
    ```bash
    cp .env.example .env.local
-   # Edit .env.local with your configuration
+   # Edit .env.local with your AWS configuration
    ```
 
 3. **Start development server:**
@@ -70,10 +81,13 @@ A modern Next.js application starter with serverless AWS infrastructure using SS
 
 ## Documentation
 
-- **📖 [Development Setup](./docs/development-setup.md)** - Development tools, code quality, and local setup
+- **📖 [Project Overview](./docs/project-overview.md)** - Vision, features, and business model
+- **🏗️ [Technical Architecture](./docs/technical-architecture.md)** - System design and infrastructure
+- **💼 [Business Logic](./docs/business-logic.md)** - Core features and domain entities
+- **🔍 [Search Implementation](./docs/search-implementation.md)** - N-gram search algorithm details
 - **🚀 [AWS Deployment](./docs/aws-deployment.md)** - Complete AWS setup and deployment guide
-- **🏗️ [Architecture Overview](./docs/architecture.md)** - Detailed AWS infrastructure and OpenNext architecture
-- **🔧 [Environment Guide](./docs/deployment-vs-runtime-environment.md)** - Understanding SST environments
+- **🔧 [Development Setup](./docs/development-setup.md)** - Local development environment
+- **📚 [Architecture Overview](./docs/architecture.md)** - AWS infrastructure details
 
 ## AWS Deployment
 

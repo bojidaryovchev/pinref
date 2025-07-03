@@ -5,18 +5,14 @@ import { extractMetadata, generateQueryTokens, generateSearchTokens } from "@/li
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
-import { z } from "zod";
-
-const createBookmarkSchema = z.object({
-  url: z.string().url(),
-  categoryId: z.string().optional(),
-  tagIds: z.array(z.string()).optional(),
-});
+import { createBookmarkSchema } from "@/schemas/bookmark.schema";
+import { SEARCH_RESULTS_LIMIT } from "@/constants";
+import { ZodError } from "zod";
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -25,28 +21,31 @@ export async function GET(request: NextRequest) {
     const categoryId = searchParams.get("category");
     const tagId = searchParams.get("tag");
     const favorite = searchParams.get("favorite");
-    const limit = parseInt(searchParams.get("limit") || "20");
+    const limit = parseInt(searchParams.get("limit") || SEARCH_RESULTS_LIMIT.toString());
 
     let bookmarks;
 
     if (query) {
       // Enhanced n-gram search functionality
       const searchTokens = generateQueryTokens(query);
-      bookmarks = await searchBookmarks(session.user.id, searchTokens);
+      bookmarks = await searchBookmarks(session.user.email, searchTokens);
     } else {
       // Regular listing with filters
-      const options: any = { limit };
+      const options: { limit: number; categoryId?: string; isFavorite?: boolean } = { limit };
 
       if (categoryId) options.categoryId = categoryId;
       if (favorite === "true") options.isFavorite = true;
 
-      const result = await getUserBookmarks(session.user.id, options);
+      const result = await getUserBookmarks(session.user.email, options);
       bookmarks = result.items;
     }
 
     // Filter by tag if specified (client-side filtering for simplicity)
     if (tagId) {
-      bookmarks = bookmarks.filter((bookmark: any) => bookmark.tagIds && bookmark.tagIds.includes(tagId));
+      bookmarks = bookmarks.filter((bookmark: unknown) => {
+        const bookmarkObj = bookmark as { tagIds?: string[] };
+        return bookmarkObj.tagIds && bookmarkObj.tagIds.includes(tagId);
+      });
     }
 
     return NextResponse.json({
@@ -67,7 +66,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -93,7 +92,7 @@ export async function POST(request: NextRequest) {
 
     const bookmark = await createBookmark({
       id: bookmarkId,
-      userId: session.user.id,
+      userId: session.user.email,
       url: encryptedData.url,
       title: encryptedData.title,
       description: encryptedData.description,
@@ -108,7 +107,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(bookmark, { status: 201 });
   } catch (error) {
     console.error("Error creating bookmark:", error);
-    if (error instanceof z.ZodError) {
+    if (error instanceof ZodError) {
       return NextResponse.json({ error: "Invalid request data" }, { status: 400 });
     }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

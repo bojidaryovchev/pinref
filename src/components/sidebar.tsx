@@ -1,14 +1,13 @@
 "use client";
 
 import SettingsDialog from "@/components/settings-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import type { Category } from "@/types/category.interface";
 import type { Tag } from "@/types/tag.interface";
-import { BookOpen, Filter, Heart, LogOut, Tag as TagIcon, User } from "lucide-react";
+import { BookOpen, Filter, Heart, Tag as TagIcon } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 
@@ -43,21 +42,7 @@ const Sidebar: React.FC<Props> = ({
   onFavoritesToggle,
   onShowAll,
 }: Props) => {
-  // Mock session for demo
-  const session = { user: { id: "temp-user", name: "Demo User", email: "demo@example.com", image: null } };
-  const [collapsed, setCollapsed] = useState(false);
-
-  const handleSignOut = () => {
-    console.log("Sign out clicked - auth is temporarily disabled");
-  };
-
-  const handleCategoriesUpdate = () => {
-    console.log("Categories updated - would refresh data in real app");
-  };
-
-  const handleTagsUpdate = () => {
-    console.log("Tags updated - would refresh data in real app");
-  };
+  const [collapsed] = useState(false);
 
   return (
     <div
@@ -172,7 +157,8 @@ const Sidebar: React.FC<Props> = ({
 
       {/* User Section */}
       <div className="border-t p-4">
-        {session?.user && (
+        {/* TODO: Enable when auth is ready */}
+        {/* {session?.user && (
           <div className="space-y-2">
             <div className="flex items-center gap-3">
               <Avatar className="h-8 w-8">
@@ -191,18 +177,19 @@ const Sidebar: React.FC<Props> = ({
 
             {!collapsed && (
               <div className="flex gap-1">
-                <SettingsDialog
-                  categories={categories}
-                  tags={tags}
-                  onCategoriesUpdate={handleCategoriesUpdate}
-                  onTagsUpdate={handleTagsUpdate}
-                />
+                <SettingsDialog />
                 <Button variant="ghost" size="sm" className="flex-1 gap-2" onClick={handleSignOut}>
                   <LogOut className="h-4 w-4" />
                   Sign Out
                 </Button>
               </div>
             )}
+          </div>
+        )} */}
+        
+        {!collapsed && (
+          <div className="flex gap-1">
+            <SettingsDialog />
           </div>
         )}
       </div>

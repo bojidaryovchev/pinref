@@ -3,29 +3,65 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useBookmarks } from "@/hooks/use-api";
 import { cn } from "@/lib/utils";
-import type { Bookmark } from "@/types/bookmark.interface";
+import type { Bookmark } from "@/schemas/bookmark.schema";
 import { Edit, ExternalLink, Folder, Heart, Tag, Trash2 } from "lucide-react";
 import Image from "next/image";
-import type React from "react";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 interface Props {
   bookmark: Bookmark;
+  categories?: Array<{ id: string; name: string; icon?: string }>;
+  tags?: Array<{ id: string; name: string; icon?: string }>;
   onEdit?: (bookmark: Bookmark) => void;
-  onDelete?: (id: string) => void;
-  onToggleFavorite?: (id: string, isFavorite: boolean) => void;
 }
 
-const BookmarkCard: React.FC<Props> = ({ bookmark, onEdit, onDelete, onToggleFavorite }) => {
+const BookmarkCard: React.FC<Props> = ({ bookmark, categories = [], tags = [], onEdit }) => {
   const [imageError, setImageError] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const { removeBookmark, toggleFavorite } = useBookmarks();
 
-  const handleImageError = () => {
-    setImageError(true);
+  const handleImageError = () => setImageError(true);
+
+  // Get category and tag names
+  const category = categories.find(c => c.id === bookmark.categoryId);
+  const bookmarkTags = bookmark.tagIds?.map(tagId => 
+    tags.find(t => t.id === tagId)
+  ).filter(Boolean) || [];
+
+  const handleFavoriteToggle = async () => {
+    setIsProcessing(true);
+    try {
+      await toggleFavorite(bookmark.id, !bookmark.isFavorite);
+      toast.success(bookmark.isFavorite ? "Removed from favorites" : "Added to favorites");
+    } catch (e) {
+      const err = e as Error;
+      toast.error(err.message || "Failed to update favorite");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const handleFavoriteToggle = () => {
-    onToggleFavorite?.(bookmark.id, !bookmark.isFavorite);
+  const handleDelete = async () => {
+    if (!showDeleteConfirm) {
+      setShowDeleteConfirm(true);
+      return;
+    }
+    
+    setIsProcessing(true);
+    try {
+      await removeBookmark(bookmark.id);
+      toast.success("Bookmark deleted");
+    } catch (e) {
+      const err = e as Error;
+      toast.error(err.message || "Failed to delete bookmark");
+    } finally {
+      setIsProcessing(false);
+      setShowDeleteConfirm(false);
+    }
   };
 
   return (
@@ -63,6 +99,8 @@ const BookmarkCard: React.FC<Props> = ({ bookmark, onEdit, onDelete, onToggleFav
             bookmark.isFavorite && "opacity-100",
           )}
           onClick={handleFavoriteToggle}
+          disabled={isProcessing}
+          aria-label={bookmark.isFavorite ? "Remove from favorites" : "Add to favorites"}
         >
           <Heart
             className={cn(
@@ -90,33 +128,29 @@ const BookmarkCard: React.FC<Props> = ({ bookmark, onEdit, onDelete, onToggleFav
             <span className="truncate">{bookmark.domain}</span>
           </div>
 
-          {(bookmark.category || bookmark.tags.length > 0) && (
+          {/* Show category and tag details with actual names */}
+          {(category || bookmarkTags.length > 0) && (
             <div className="space-y-2">
-              {bookmark.category && (
+              {category && (
                 <div className="flex items-center gap-1">
                   <Folder className="h-3 w-3" />
-                  <Badge
-                    variant="secondary"
-                    className="text-xs"
-                    style={{ backgroundColor: `${bookmark.category.color}20` }}
-                  >
-                    <span className="mr-1">{bookmark.category.icon}</span>
-                    {bookmark.category.name}
+                  <Badge variant="secondary" className="text-xs">
+                    <span className="mr-1">{category.icon}</span>
+                    {category.name}
                   </Badge>
                 </div>
               )}
-
-              {bookmark.tags.length > 0 && (
+              {bookmarkTags.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1">
                   <Tag className="h-3 w-3" />
-                  {bookmark.tags.slice(0, 2).map((tag) => (
-                    <Badge key={tag.id} variant="outline" className="text-xs">
-                      {tag.name}
+                  {bookmarkTags.slice(0, 2).map((tag) => (
+                    <Badge key={tag?.id} variant="outline" className="text-xs">
+                      {tag?.name}
                     </Badge>
                   ))}
-                  {bookmark.tags.length > 2 && (
+                  {bookmarkTags.length > 2 && (
                     <Badge variant="outline" className="text-xs">
-                      +{bookmark.tags.length - 2}
+                      +{bookmarkTags.length - 2}
                     </Badge>
                   )}
                 </div>
@@ -136,17 +170,42 @@ const BookmarkCard: React.FC<Props> = ({ bookmark, onEdit, onDelete, onToggleFav
             </a>
 
             <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => onEdit?.(bookmark)}>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 w-7 p-0" 
+                onClick={() => onEdit?.(bookmark)}
+                aria-label="Edit bookmark"
+                disabled={isProcessing}
+              >
                 <Edit className="h-3 w-3" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-destructive hover:text-destructive h-7 w-7 p-0"
-                onClick={() => onDelete?.(bookmark.id)}
+                className={cn(
+                  "h-7 w-7 p-0",
+                  showDeleteConfirm 
+                    ? "text-red-600 bg-red-50 hover:bg-red-100" 
+                    : "text-destructive hover:text-destructive"
+                )}
+                onClick={handleDelete}
+                disabled={isProcessing}
+                aria-label={showDeleteConfirm ? "Confirm delete" : "Delete bookmark"}
               >
                 <Trash2 className="h-3 w-3" />
               </Button>
+              {showDeleteConfirm && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 text-gray-500"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  aria-label="Cancel delete"
+                >
+                  ✕
+                </Button>
+              )}
             </div>
           </div>
         </div>

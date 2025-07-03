@@ -1,7 +1,5 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DeleteCommand,
-  DynamoDBDocumentClient,
   GetCommand,
   PutCommand,
   QueryCommand,
@@ -17,16 +15,10 @@ import type { QueryOptions } from "@/types/query-options.interface";
 import type { QueryResult } from "@/types/query-result.interface";
 import type { TagData } from "@/types/tag-data.interface";
 import type { UserData } from "@/types/user-data.interface";
+import { dynamoDocClient } from "./db-client";
 
-export const client = new DynamoDBClient({
-  region: process.env.AWS_REGION || "us-east-1",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
-
-export const dynamodb = DynamoDBDocumentClient.from(client);
+// Use the shared DynamoDB document client
+export const dynamodb = dynamoDocClient;
 
 // Key patterns for single-table design
 export const createPK = (entityType: string, id: string) => `${entityType}#${id}`;
@@ -259,6 +251,57 @@ export const getUserCategories = async (userId: string) => {
   return result.Items || [];
 }
 
+// Update category
+export const updateCategory = async (
+  categoryId: string,
+  updates: Partial<{ name: string; icon: string; color: string }>,
+) => {
+  const updateExpressions: string[] = [];
+  const expressionAttributeValues: Record<string, unknown> = {};
+  const expressionAttributeNames: Record<string, string> = {};
+
+  Object.entries(updates).forEach(([key, value]) => {
+    if (value !== undefined) {
+      updateExpressions.push(`#${key} = :${key}`);
+      expressionAttributeValues[`:${key}`] = value;
+      expressionAttributeNames[`#${key}`] = key;
+    }
+  });
+
+  updateExpressions.push("#updatedAt = :updatedAt");
+  expressionAttributeValues[":updatedAt"] = new Date().toISOString();
+  expressionAttributeNames["#updatedAt"] = "updatedAt";
+
+  const result = await dynamodb.send(
+    new UpdateCommand({
+      TableName: TABLE_NAME,
+      Key: {
+        PK: createPK(ENTITY_TYPES.CATEGORY, categoryId),
+        SK: createSK(ENTITY_TYPES.CATEGORY),
+      },
+      UpdateExpression: `SET ${updateExpressions.join(", ")}`,
+      ExpressionAttributeValues: expressionAttributeValues,
+      ExpressionAttributeNames: expressionAttributeNames,
+      ReturnValues: "ALL_NEW",
+    }),
+  );
+
+  return result.Attributes;
+};
+
+// Delete category
+export const deleteCategory = async (categoryId: string) => {
+  await dynamodb.send(
+    new DeleteCommand({
+      TableName: TABLE_NAME,
+      Key: {
+        PK: createPK(ENTITY_TYPES.CATEGORY, categoryId),
+        SK: createSK(ENTITY_TYPES.CATEGORY),
+      },
+    }),
+  );
+};
+
 // Tag operations
 export const createTag = async (tagData: TagData) => {
   const now = new Date().toISOString();
@@ -302,6 +345,57 @@ export const getUserTags = async (userId: string) => {
 
   return result.Items || [];
 }
+
+// Update tag
+export const updateTag = async (
+  tagId: string,
+  updates: Partial<{ name: string; icon: string }>,
+) => {
+  const updateExpressions: string[] = [];
+  const expressionAttributeValues: Record<string, unknown> = {};
+  const expressionAttributeNames: Record<string, string> = {};
+
+  Object.entries(updates).forEach(([key, value]) => {
+    if (value !== undefined) {
+      updateExpressions.push(`#${key} = :${key}`);
+      expressionAttributeValues[`:${key}`] = value;
+      expressionAttributeNames[`#${key}`] = key;
+    }
+  });
+
+  updateExpressions.push("#updatedAt = :updatedAt");
+  expressionAttributeValues[":updatedAt"] = new Date().toISOString();
+  expressionAttributeNames["#updatedAt"] = "updatedAt";
+
+  const result = await dynamodb.send(
+    new UpdateCommand({
+      TableName: TABLE_NAME,
+      Key: {
+        PK: createPK(ENTITY_TYPES.TAG, tagId),
+        SK: createSK(ENTITY_TYPES.TAG),
+      },
+      UpdateExpression: `SET ${updateExpressions.join(", ")}`,
+      ExpressionAttributeValues: expressionAttributeValues,
+      ExpressionAttributeNames: expressionAttributeNames,
+      ReturnValues: "ALL_NEW",
+    }),
+  );
+
+  return result.Attributes;
+};
+
+// Delete tag
+export const deleteTag = async (tagId: string) => {
+  await dynamodb.send(
+    new DeleteCommand({
+      TableName: TABLE_NAME,
+      Key: {
+        PK: createPK(ENTITY_TYPES.TAG, tagId),
+        SK: createSK(ENTITY_TYPES.TAG),
+      },
+    }),
+  );
+};
 
 // Enhanced search functionality with n-gram matching
 export const searchBookmarks = async (userId: string, searchTokens: string[]): Promise<BookmarkWithScore[]> => {

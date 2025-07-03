@@ -96,7 +96,7 @@ For quick deployment without a custom domain, you can use the default CloudFront
 
    ```typescript
    // Use individual email identity instead of domain identity
-   const emailIdentities: Identity[] = [{ name: "SupportEmail", sender: "contact@yourcompany.com" }];
+   const emailIdentities: Identity[] = [{ name: "SupportEmail", sender: "support@pinref.com" }];
 
    // Remove domain identity or keep it if you have a domain elsewhere
    // const domainIdentity = new sst.aws.Email("NextEmail", {
@@ -212,14 +212,14 @@ This project includes a contact form that sends emails using AWS Simple Email Se
 
    ```typescript
    // In src/constants.tsx
-   export const CONTACT_EMAIL = "contact@yourcompany.com";
+   export const CONTACT_EMAIL = "support@pinref.com";
    ```
 
 2. **Configure the email identities** in your `sst.config.ts`:
 
    ```typescript
    // In sst.config.ts
-   const emailIdentities: Identity[] = [{ name: "SupportEmail", sender: "contact@yourcompany.com" }];
+   const emailIdentities: Identity[] = [{ name: "SupportEmail", sender: "support@pinref.com" }];
    ```
 
 3. **Deploy the application** using SST (the SES configuration is included in the deployment)
@@ -242,7 +242,7 @@ The email configuration involves three main components:
 2. **Personal Email Identity**: Set in the `emailIdentities` array in `sst.config.ts`
 3. **Contact Email Recipient**: Set in `src/constants.tsx`
 
-The system will send emails from `noreply@yourdomain.com` (if using domain) to the email address specified in `CONTACT_EMAIL`.
+The system will send emails from `noreply@pinref.com` (if using domain) to the email address specified in `CONTACT_EMAIL`.
 
 > **Note:** In development, AWS SES operates in sandbox mode, which means you can only send emails to verified email addresses. For production use, you may need to request production access from AWS SES.
 
@@ -297,7 +297,7 @@ This approach ensures you get proper TypeScript definitions and SST tooling supp
 
 **Build Fails While SSO Script is Running:**
 
-- **Problem**: Running `npm run build` or Prisma commands while `start-local-sso.sh` is active
+- **Problem**: Running `npm run build` while `start-local-sso.sh` is active
 - **Solution**: Stop the SSO script (press any key) before running build commands
 - **Reason**: The script locks the terminal session and can interfere with build processes
 

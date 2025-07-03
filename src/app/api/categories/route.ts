@@ -12,14 +12,14 @@ const createCategorySchema = z.object({
   color: z.string().min(1),
 });
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const categories = await getUserCategories(session.user.id);
+    const categories = await getUserCategories(session.user.email);
 
     // Add bookmark count (would need separate query in real implementation)
     const categoriesWithCount = categories.map((category) => ({
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     const category = await createCategory({
       id: categoryId,
-      userId: session.user.id,
+      userId: session.user.email,
       name: encryptedData.name,
       icon,
       color,

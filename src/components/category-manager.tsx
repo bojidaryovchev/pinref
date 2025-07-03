@@ -11,23 +11,25 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { Category } from "@/types/category.interface";
+import type { Category } from "@/schemas/category.schema";
 import { PRESET_COLORS, PRESET_ICONS, ERROR_MESSAGES, TOAST_MESSAGES, PLACEHOLDERS } from "@/constants";
 import { Edit, Palette, Plus, Trash2 } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useCategories } from "@/hooks/use-api";
+import { createCategorySchema } from "@/schemas/category.schema";
 
-interface CategoryWithCount extends Category {
-  _count: { bookmarks: number };
-}
-
-interface Props {
-  categories: CategoryWithCount[];
-  onUpdate: () => void;
-}
-
-const CategoryManager: React.FC<Props> = ({ categories, onUpdate }) => {
+const CategoryManager: React.FC = () => {
+  const {
+    categories = [],
+    isLoading,
+    error,
+    addCategory,
+    updateCategory: updateCat,
+    removeCategory,
+    // refreshCategories,
+  } = useCategories();
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
@@ -35,18 +37,26 @@ const CategoryManager: React.FC<Props> = ({ categories, onUpdate }) => {
     icon: "📁",
     color: "#3b82f6",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!formData.name.trim()) {
       toast.error(ERROR_MESSAGES.CATEGORY_NAME_REQUIRED);
       return;
     }
-
-    // In real implementation, this would call the API
-    toast.success(TOAST_MESSAGES.CATEGORY_CREATED);
-    setFormData({ name: "", icon: "📁", color: "#3b82f6" });
-    setIsCreating(false);
-    onUpdate();
+    try {
+      setIsSubmitting(true);
+      const parsed = createCategorySchema.parse(formData);
+      await addCategory(parsed);
+      toast.success(TOAST_MESSAGES.CATEGORY_CREATED);
+      setFormData({ name: "", icon: "📁", color: "#3b82f6" });
+      setIsCreating(false);
+    } catch (err: unknown) {
+      const error = err as Error;
+      toast.error(error.message || "Failed to create category");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleEdit = (category: Category) => {
@@ -58,23 +68,37 @@ const CategoryManager: React.FC<Props> = ({ categories, onUpdate }) => {
     });
   };
 
-  const handleUpdate = () => {
-    if (!formData.name.trim()) {
-      toast.error("Category name is required");
+  const handleUpdate = async () => {
+    if (!formData.name.trim() || !editingCategory) {
+      toast.error(ERROR_MESSAGES.CATEGORY_NAME_REQUIRED);
       return;
     }
-
-    // In real implementation, this would call the API
-    toast.success("Category updated successfully");
-    setEditingCategory(null);
-    setFormData({ name: "", icon: "📁", color: "#3b82f6" });
-    onUpdate();
+    try {
+      setIsSubmitting(true);
+      const parsed = createCategorySchema.parse(formData);
+      await updateCat(editingCategory.id, parsed);
+      toast.success("Category updated successfully");
+      setEditingCategory(null);
+      setFormData({ name: "", icon: "📁", color: "#3b82f6" });
+    } catch (err: unknown) {
+      const error = err as Error;
+      toast.error(error.message || "Failed to update category");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDelete = () => {
-    // In real implementation, this would call the API
-    toast.success(TOAST_MESSAGES.CATEGORY_DELETED);
-    onUpdate();
+  const handleDelete = async (id: string) => {
+    try {
+      setIsSubmitting(true);
+      await removeCategory(id);
+      toast.success(TOAST_MESSAGES.CATEGORY_DELETED);
+    } catch (err: unknown) {
+      const error = err as Error;
+      toast.error(error.message || "Failed to delete category");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const CategoryForm = () => (
@@ -161,8 +185,8 @@ const CategoryManager: React.FC<Props> = ({ categories, onUpdate }) => {
         >
           Cancel
         </Button>
-        <Button onClick={editingCategory ? handleUpdate : handleCreate}>
-          {editingCategory ? "Update" : "Create"} Category
+        <Button onClick={editingCategory ? handleUpdate : handleCreate} disabled={isSubmitting}>
+          {isSubmitting ? (editingCategory ? "Updating..." : "Creating...") : (editingCategory ? "Update" : "Create")} Category
         </Button>
       </div>
     </div>
@@ -192,7 +216,13 @@ const CategoryManager: React.FC<Props> = ({ categories, onUpdate }) => {
       </div>
 
       <div className="space-y-2">
-        {categories.map((category) => (
+        {isLoading && (
+          <div className="text-muted-foreground py-8 text-center">Loading categories...</div>
+        )}
+        {error && (
+          <div className="text-destructive py-8 text-center">Failed to load categories</div>
+        )}
+        {!isLoading && !error && categories.map((category) => (
           <div key={category.id} className="flex items-center justify-between rounded-lg border p-3">
             <div className="flex items-center gap-3">
               <div
@@ -203,10 +233,9 @@ const CategoryManager: React.FC<Props> = ({ categories, onUpdate }) => {
               </div>
               <div>
                 <p className="font-medium">{category.name}</p>
-                <p className="text-muted-foreground text-sm">{category._count.bookmarks} bookmarks</p>
+                <p className="text-muted-foreground text-sm">{category._count?.bookmarks ?? 0} bookmarks</p>
               </div>
             </div>
-
             <div className="flex items-center gap-2">
               <Dialog
                 open={editingCategory?.id === category.id}
@@ -225,11 +254,10 @@ const CategoryManager: React.FC<Props> = ({ categories, onUpdate }) => {
                   <CategoryForm />
                 </DialogContent>
               </Dialog>
-
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleDelete()}
+                onClick={() => handleDelete(category.id)}
                 className="text-destructive hover:text-destructive"
               >
                 <Trash2 className="h-4 w-4" />

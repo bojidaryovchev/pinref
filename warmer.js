@@ -1,4 +1,4 @@
-const URL_TO_VISIT = "https://yourdomain.com";
+const URL_TO_VISIT = "https://pinref.com";
 const CONCURRENT_VISITS = 100;
 
 async function accessLink(visitNumber) {

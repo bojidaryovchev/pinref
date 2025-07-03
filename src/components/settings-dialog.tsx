@@ -15,29 +15,12 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Category } from "@/types/category.interface";
-import type { Tag } from "@/types/tag.interface";
 import { Database, Palette, Settings, Shield, User } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-interface CategoryWithCount extends Category {
-  _count: { bookmarks: number };
-}
-
-interface TagWithCount extends Tag {
-  _count: { bookmarks: number };
-}
-
-interface Props {
-  categories: CategoryWithCount[];
-  tags: TagWithCount[];
-  onCategoriesUpdate: () => void;
-  onTagsUpdate: () => void;
-}
-
-const SettingsDialog: React.FC<Props> = ({ categories, tags, onCategoriesUpdate, onTagsUpdate }) => {
+const SettingsDialog: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [settings, setSettings] = useState({
     encryptData: true,
@@ -160,11 +143,11 @@ const SettingsDialog: React.FC<Props> = ({ categories, tags, onCategoriesUpdate,
           </TabsContent>
 
           <TabsContent value="categories" className="space-y-6">
-            <CategoryManager categories={categories} onUpdate={onCategoriesUpdate} />
+            <CategoryManager />
           </TabsContent>
 
           <TabsContent value="tags" className="space-y-6">
-            <TagManager tags={tags} onUpdate={onTagsUpdate} />
+            <TagManager />
           </TabsContent>
 
           <TabsContent value="security" className="space-y-6">

@@ -3,7 +3,7 @@
  */
 
 /** Email address where contact form submissions will be sent */
-export const CONTACT_EMAIL = "contact@yourcompany.com";
+export const CONTACT_EMAIL = "support@pinref.com";
 
 /** Site metadata */
 export const SITE_TITLE = "Pinref - Visual Bookmark Manager";
@@ -13,7 +13,7 @@ export const SITE_DESCRIPTION = "A modern visual bookmark manager with categorie
 export const TOASTER_DURATION_MS = 6000;
 
 /** DynamoDB table configuration */
-export const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || "bookmark-manager";
+export const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME!;
 
 /** Entity types for DynamoDB single-table design */
 export const ENTITY_TYPES = {
@@ -84,99 +84,31 @@ export const PRESET_TAG_ICONS = [
 ];
 
 /** AWS configuration */
-export const AWS_REGION = process.env.AWS_REGION || "us-east-1";
+export const AWS_REGION = process.env.AWS_REGION!;
+
+/** API endpoint URLs */
+export const API_ENDPOINTS = {
+  BOOKMARKS: "/api/bookmarks",
+  BOOKMARK_BY_ID: (id: string) => `/api/bookmarks/${id}`,
+  CATEGORIES: "/api/categories",
+  CATEGORY_BY_ID: (id: string) => `/api/categories/${id}`,
+  TAGS: "/api/tags",
+  TAG_BY_ID: (id: string) => `/api/tags/${id}`,
+  CONTACT: "/api/contact",
+};
+
+/** SWR Configuration */
+export const SWR_CONFIG = {
+  REFRESH_INTERVAL: 60000, // 1 minute
+  BOOKMARK_CACHE_KEY: "bookmarks",
+  CATEGORY_CACHE_KEY: "categories",
+  TAG_CACHE_KEY: "tags",
+};
 
 /** Search configuration */
-export const SEARCH_RESULTS_LIMIT = 50;
+export const SEARCH_RESULTS_LIMIT = 100;
+export const MIN_SEARCH_CHARS = 2;
 export const SEARCH_DEBOUNCE_MS = 300;
-
-/** Mock data for demo purposes */
-export const MOCK_CATEGORIES = [
-  { id: "1", name: "Development", icon: "💻", color: "#3b82f6", _count: { bookmarks: 5 } },
-  { id: "2", name: "Design", icon: "🎨", color: "#8b5cf6", _count: { bookmarks: 3 } },
-  { id: "3", name: "News", icon: "📰", color: "#ef4444", _count: { bookmarks: 2 } },
-  { id: "4", name: "Learning", icon: "📚", color: "#10b981", _count: { bookmarks: 4 } },
-];
-
-export const MOCK_TAGS = [
-  { id: "1", name: "React", _count: { bookmarks: 3 } },
-  { id: "2", name: "JavaScript", _count: { bookmarks: 4 } },
-  { id: "3", name: "CSS", _count: { bookmarks: 2 } },
-  { id: "4", name: "Tutorial", _count: { bookmarks: 3 } },
-  { id: "5", name: "Tools", _count: { bookmarks: 2 } },
-];
-
-export const MOCK_BOOKMARKS = [
-  {
-    id: "1",
-    url: "https://react.dev",
-    title: "React - The library for web and native user interfaces",
-    description: "React lets you build user interfaces out of individual pieces called components.",
-    image: "https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=800",
-    favicon: "https://react.dev/favicon.ico",
-    domain: "react.dev",
-    isFavorite: true,
-  },
-  {
-    id: "2",
-    url: "https://tailwindcss.com",
-    title: "Tailwind CSS - Rapidly build modern websites",
-    description: "A utility-first CSS framework packed with classes that can be composed to build any design.",
-    image: "https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=800",
-    favicon: "https://tailwindcss.com/favicon.ico",
-    domain: "tailwindcss.com",
-    isFavorite: false,
-  },
-  {
-    id: "3",
-    url: "https://nextjs.org",
-    title: "Next.js by Vercel - The React Framework",
-    description: "Used by some of the world's largest companies, Next.js enables you to create full-stack web applications.",
-    image: "https://images.pexels.com/photos/574071/pexels-photo-574071.jpeg?auto=compress&cs=tinysrgb&w=800",
-    favicon: "https://nextjs.org/favicon.ico",
-    domain: "nextjs.org",
-    isFavorite: true,
-  },
-  {
-    id: "4",
-    url: "https://www.figma.com",
-    title: "Figma: The collaborative interface design tool",
-    description: "Build better products as a team. Design, prototype, and gather feedback all in one place.",
-    image: "https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=800",
-    favicon: "https://www.figma.com/favicon.ico",
-    domain: "figma.com",
-    isFavorite: false,
-  },
-  {
-    id: "5",
-    url: "https://developer.mozilla.org",
-    title: "MDN Web Docs",
-    description: "The MDN Web Docs site provides information about Open Web technologies.",
-    image: "https://images.pexels.com/photos/11035471/pexels-photo-11035471.jpeg?auto=compress&cs=tinysrgb&w=800",
-    favicon: "https://developer.mozilla.org/favicon.ico",
-    domain: "developer.mozilla.org",
-    isFavorite: true,
-  },
-  {
-    id: "6",
-    url: "https://github.com",
-    title: "GitHub: Let's build from here",
-    description: "GitHub is where over 100 million developers shape the future of software, together.",
-    image: "https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=800",
-    favicon: "https://github.com/favicon.ico",
-    domain: "github.com",
-    isFavorite: false,
-  },
-];
-
-/** User session mock data */
-export const MOCK_USER_SESSION = {
-  user: { 
-    id: "temp-user", 
-    name: "Demo User", 
-    email: "demo@example.com" 
-  }
-};
 
 /** Authentication status constants */
 export const AUTH_STATUS = {

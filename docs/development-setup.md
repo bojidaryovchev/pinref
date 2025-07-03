@@ -133,7 +133,7 @@ declare module "sst" {
 import { Resource } from "sst";
 
 // Type-safe access to your SES email resources
-const supportEmail = Resource.SupportEmail.sender; // "contact@yourcompany.com"
+const supportEmail = Resource.SupportEmail.sender; // "support@pinref.com"
 const nextEmail = Resource.NextEmail.sender;
 ```
 
@@ -210,7 +210,7 @@ Moved to `.browserslistrc` for better tool compatibility:
 - `npm run dev`: Start development server with Turbopack (requires manual AWS setup)
 - `npm run typecheck`: Type checking without emitting files
 
-> **⚠️ Important**: Use `start-local-sso.sh` for proper AWS integration. Stop the script before running build commands or Prisma operations.
+> **⚠️ Important**: Use `start-local-sso.sh` for proper AWS integration. Stop the script before running build commands.
 
 ### Build & Deploy
 
@@ -322,7 +322,7 @@ toast.dismiss(loadingToast);
 
 ```javascript
 // warmer.js - Optimized 1-minute warming strategy
-const URL_TO_VISIT = "https://yourdomain.com";
+const URL_TO_VISIT = "https://pinref.com";
 const CONCURRENT_VISITS = 100;
 
 // Keep Lambdas warm every 1 minute (optimal interval)

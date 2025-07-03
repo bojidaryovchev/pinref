@@ -11,43 +11,48 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ERROR_MESSAGES, PLACEHOLDERS, PRESET_TAG_ICONS, TOAST_MESSAGES } from "@/constants";
-import type { Tag } from "@/types/tag.interface";
+import { PLACEHOLDERS, PRESET_TAG_ICONS, TOAST_MESSAGES } from "@/constants";
+
 import { Edit, Hash, Plus, Tag as TagIcon, Trash2 } from "lucide-react";
-import type React from "react";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useTags } from "@/hooks/use-api";
+import { createTagSchema, Tag } from "@/schemas/tag.schema";
 
-interface TagWithCount extends Tag {
-  icon?: string;
-  _count: { bookmarks: number };
-}
 
-interface Props {
-  tags: TagWithCount[];
-  onUpdate: () => void;
-}
-
-const TagManager: React.FC<Props> = ({ tags, onUpdate }) => {
+const TagManager: React.FC = () => {
+  const { tags, isLoading, error, addTag, updateTag, removeTag } = useTags();
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     icon: "🏷️",
   });
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleCreate = () => {
-    if (!formData.name.trim()) {
-      toast.error("Tag name is required");
+
+  const handleCreate = async () => {
+    setFormError(null);
+    const parsed = createTagSchema.safeParse(formData);
+    if (!parsed.success) {
+      setFormError(parsed.error.errors[0].message);
       return;
     }
-
-    // In real implementation, this would call the API
-    toast.success(TOAST_MESSAGES.TAG_CREATED);
-    setFormData({ name: "", icon: "🏷️" });
-    setIsCreating(false);
-    onUpdate();
+    setIsSubmitting(true);
+    try {
+      await addTag(parsed.data);
+      toast.success(TOAST_MESSAGES.TAG_CREATED);
+      setFormData({ name: "", icon: "🏷️" });
+      setIsCreating(false);
+    } catch (e) {
+      const err = e as Error;
+      toast.error(err.message || "Failed to create tag");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
 
   const handleEdit = (tag: Tag) => {
     setEditingTag(tag);
@@ -55,25 +60,44 @@ const TagManager: React.FC<Props> = ({ tags, onUpdate }) => {
       name: tag.name,
       icon: tag.icon || "🏷️",
     });
+    setFormError(null);
   };
 
-  const handleUpdate = () => {
-    if (!formData.name.trim()) {
-      toast.error("Tag name is required");
+
+  const handleUpdate = async () => {
+    setFormError(null);
+    if (!editingTag) return;
+    const parsed = createTagSchema.safeParse(formData);
+    if (!parsed.success) {
+      setFormError(parsed.error.errors[0].message);
       return;
     }
-
-    // In real implementation, this would call the API
-    toast.success(TOAST_MESSAGES.TAG_UPDATED);
-    setEditingTag(null);
-    setFormData({ name: "", icon: "🏷️" });
-    onUpdate();
+    setIsSubmitting(true);
+    try {
+      await updateTag(editingTag.id, parsed.data);
+      toast.success(TOAST_MESSAGES.TAG_UPDATED);
+      setEditingTag(null);
+      setFormData({ name: "", icon: "🏷️" });
+    } catch (e) {
+      const err = e as Error;
+      toast.error(err.message || "Failed to update tag");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDelete = (tagId: string) => {
-    // In real implementation, this would call the API
-    toast.success("Tag deleted successfully");
-    onUpdate();
+
+  const handleDelete = async (tagId: string) => {
+    setIsSubmitting(true);
+    try {
+      await removeTag(tagId);
+      toast.success(TOAST_MESSAGES.TAG_DELETED);
+    } catch (e) {
+      const err = e as Error;
+      toast.error(err.message || "Failed to delete tag");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const TagForm = () => (
@@ -84,18 +108,19 @@ const TagManager: React.FC<Props> = ({ tags, onUpdate }) => {
           id="name"
           value={formData.name}
           onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-          placeholder="Enter tag name"
+          placeholder={PLACEHOLDERS.TAG_NAME}
+          disabled={isSubmitting}
         />
       </div>
-
       <div className="space-y-2">
         <Label>Icon (Optional)</Label>
         <div className="space-y-3">
           <Input
             value={formData.icon}
             onChange={(e) => setFormData((prev) => ({ ...prev, icon: e.target.value }))}
-            placeholder="Enter emoji or leave empty"
+            placeholder={PLACEHOLDERS.TAG_ICON}
             className="text-center text-lg"
+            disabled={isSubmitting}
           />
           <div className="grid grid-cols-10 gap-2">
             {PRESET_TAG_ICONS.map((icon) => (
@@ -105,6 +130,7 @@ const TagManager: React.FC<Props> = ({ tags, onUpdate }) => {
                 size="sm"
                 className="h-8 w-8 p-0 text-lg"
                 onClick={() => setFormData((prev) => ({ ...prev, icon }))}
+                disabled={isSubmitting}
               >
                 {icon}
               </Button>
@@ -115,12 +141,13 @@ const TagManager: React.FC<Props> = ({ tags, onUpdate }) => {
             size="sm"
             onClick={() => setFormData((prev) => ({ ...prev, icon: "" }))}
             className="w-full"
+            disabled={isSubmitting}
           >
             No Icon
           </Button>
         </div>
       </div>
-
+      {formError && <div className="text-destructive text-sm">{formError}</div>}
       <div className="flex justify-end gap-2">
         <Button
           variant="outline"
@@ -128,11 +155,15 @@ const TagManager: React.FC<Props> = ({ tags, onUpdate }) => {
             setIsCreating(false);
             setEditingTag(null);
             setFormData({ name: "", icon: "🏷️" });
+            setFormError(null);
           }}
+          disabled={isSubmitting}
         >
           Cancel
         </Button>
-        <Button onClick={editingTag ? handleUpdate : handleCreate}>{editingTag ? "Update" : "Create"} Tag</Button>
+        <Button onClick={editingTag ? handleUpdate : handleCreate} disabled={isSubmitting}>
+          {editingTag ? "Update" : "Create"} Tag
+        </Button>
       </div>
     </div>
   );
@@ -160,8 +191,15 @@ const TagManager: React.FC<Props> = ({ tags, onUpdate }) => {
         </Dialog>
       </div>
 
+      {isLoading && (
+        <div className="text-muted-foreground py-8 text-center">Loading tags...</div>
+      )}
+      {error && (
+        <div className="text-destructive py-8 text-center">Failed to load tags</div>
+      )}
+
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-        {tags.map((tag) => (
+        {tags && tags.length > 0 && tags.map((tag: Tag) => (
           <div key={tag.id} className="flex items-center justify-between rounded-lg border p-3">
             <div className="flex items-center gap-2">
               {tag.icon ? (
@@ -171,10 +209,9 @@ const TagManager: React.FC<Props> = ({ tags, onUpdate }) => {
               )}
               <div>
                 <p className="font-medium">{tag.name}</p>
-                <p className="text-muted-foreground text-sm">{tag._count.bookmarks} bookmarks</p>
+                <p className="text-muted-foreground text-sm">{tag._count?.bookmarks ?? 0} bookmarks</p>
               </div>
             </div>
-
             <div className="flex items-center gap-1">
               <Dialog open={editingTag?.id === tag.id} onOpenChange={(open) => !open && setEditingTag(null)}>
                 <DialogTrigger asChild>
@@ -190,12 +227,12 @@ const TagManager: React.FC<Props> = ({ tags, onUpdate }) => {
                   <TagForm />
                 </DialogContent>
               </Dialog>
-
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => handleDelete(tag.id)}
                 className="text-destructive hover:text-destructive"
+                disabled={isSubmitting}
               >
                 <Trash2 className="h-3 w-3" />
               </Button>
@@ -204,7 +241,7 @@ const TagManager: React.FC<Props> = ({ tags, onUpdate }) => {
         ))}
       </div>
 
-      {tags.length === 0 && (
+      {(!isLoading && (!tags || tags.length === 0)) && (
         <div className="text-muted-foreground py-8 text-center">
           <TagIcon className="mx-auto mb-4 h-12 w-12 opacity-50" />
           <p>No tags yet. Create your first tag to get started!</p>
