@@ -1,5 +1,5 @@
 import { authOptions } from "@/lib/auth";
-import { deleteTag, getUserTags, updateTag } from "@/lib/dynamodb";
+import { deleteTag, getTagById, updateTag } from "@/lib/dynamodb";
 import { encryptTagData } from "@/lib/encryption";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
@@ -10,18 +10,23 @@ const updateTagSchema = z.object({
   icon: z.string().optional(),
 });
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // For simplicity, get all user tags and find the one we want
-    const tags = await getUserTags(session.user.email);
-    const tag = tags.find((item) => item.id === params.id);
+    const tag = await getTagById(id);
 
     if (!tag) {
+      return NextResponse.json({ error: "Tag not found" }, { status: 404 });
+    }
+
+    // Verify the tag belongs to the current user
+    const tagData = tag as { userId?: string };
+    if (tagData.userId !== session.user.email) {
       return NextResponse.json({ error: "Tag not found" }, { status: 404 });
     }
 
@@ -32,8 +37,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -47,7 +53,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       ? { ...updateData, name: encryptTagData({ name: updateData.name }).name }
       : updateData;
 
-    const tag = await updateTag(params.id, processedData);
+    const tag = await updateTag(id, processedData);
 
     return NextResponse.json(tag);
   } catch (error) {
@@ -59,14 +65,15 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await deleteTag(params.id);
+    await deleteTag(id);
 
     return NextResponse.json({ success: true });
   } catch (error) {

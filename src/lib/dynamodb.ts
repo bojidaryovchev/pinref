@@ -206,6 +206,21 @@ export const deleteBookmark = async (bookmarkId: string) => {
   );
 }
 
+// Get a bookmark by ID
+export const getBookmarkById = async (bookmarkId: string): Promise<unknown | null> => {
+  const result = await dynamodb.send(
+    new GetCommand({
+      TableName: TABLE_NAME,
+      Key: {
+        PK: createPK(ENTITY_TYPES.BOOKMARK, bookmarkId),
+        SK: createSK(ENTITY_TYPES.BOOKMARK),
+      },
+    }),
+  );
+
+  return result.Item || null;
+};
+
 // Category operations
 export const createCategory = async (categoryData: CategoryData) => {
   const now = new Date().toISOString();
@@ -397,19 +412,45 @@ export const deleteTag = async (tagId: string) => {
   );
 };
 
-// Enhanced search functionality with n-gram matching
+// Enhanced search functionality with n-gram matching - uses DynamoDB's contains operator
 export const searchBookmarks = async (userId: string, searchTokens: string[]): Promise<BookmarkWithScore[]> => {
   if (!searchTokens.length) return [];
 
-  const results = new Map<string, BookmarkWithScore>();
+  // We'll use DynamoDB's FilterExpression to find items where searchTokens contains at least one of our search tokens
+  // This approach leverages DynamoDB's native filtering capabilities instead of loading all items
+  
+  const params: DynamoDBParams = {
+    TableName: TABLE_NAME,
+    IndexName: "GSI1",
+    KeyConditionExpression: "GSI1PK = :gsi1pk AND begins_with(GSI1SK, :gsi1sk)",
+    ExpressionAttributeValues: {
+      ":gsi1pk": createGSI1PK(userId),
+      ":gsi1sk": createGSI1SK(ENTITY_TYPES.BOOKMARK),
+    },
+    ScanIndexForward: false, // Sort by newest first
+    Limit: SEARCH_RESULTS_LIMIT,
+  };
 
-  // Search through user's bookmarks and score matches
-  const allBookmarks = await getUserBookmarks(userId, { limit: 1000 });
+  // Build the search filter expression using contains()
+  if (searchTokens.length > 0) {
+    // Create filter expressions for each token
+    const tokenFilters = searchTokens.map((token, index) => {
+      params.ExpressionAttributeValues![`:token${index}`] = token;
+      return `contains(searchTokens, :token${index})`;
+    });
 
-  for (const bookmark of allBookmarks.items) {
-    const bookmarkRecord = bookmark as BookmarkWithScore;
+    // Combine with OR logic - any match is a hit
+    params.FilterExpression = tokenFilters.join(" OR ");
+  }
+
+  const result = await dynamodb.send(new QueryCommand(params));
+  const items = result.Items || [];
+
+  // Calculate scores for ranking (still needed for better relevance sorting)
+  const scoredResults = items.map((item) => {
+    const bookmark = item as BookmarkWithScore;
+    const bookmarkTokens = bookmark.searchTokens || [];
     let score = 0;
-    const bookmarkTokens = bookmarkRecord.searchTokens || [];
 
     // Calculate match score based on token overlap
     for (const queryToken of searchTokens) {
@@ -427,13 +468,39 @@ export const searchBookmarks = async (userId: string, searchTokens: string[]): P
       }
     }
 
-    if (score > 0) {
-      results.set(bookmarkRecord.id, { ...bookmarkRecord, searchScore: score });
-    }
-  }
+    return { ...bookmark, searchScore: score };
+  });
 
   // Sort by score (highest first) and return
-  return Array.from(results.values())
-    .sort((a, b) => b.searchScore - a.searchScore)
-    .slice(0, SEARCH_RESULTS_LIMIT); // Limit results
+  return scoredResults.sort((a, b) => b.searchScore - a.searchScore);
 }
+
+// Get a category by ID
+export const getCategoryById = async (categoryId: string): Promise<unknown | null> => {
+  const result = await dynamodb.send(
+    new GetCommand({
+      TableName: TABLE_NAME,
+      Key: {
+        PK: createPK(ENTITY_TYPES.CATEGORY, categoryId),
+        SK: createSK(ENTITY_TYPES.CATEGORY),
+      },
+    }),
+  );
+
+  return result.Item || null;
+};
+
+// Get a tag by ID
+export const getTagById = async (tagId: string): Promise<unknown | null> => {
+  const result = await dynamodb.send(
+    new GetCommand({
+      TableName: TABLE_NAME,
+      Key: {
+        PK: createPK(ENTITY_TYPES.TAG, tagId),
+        SK: createSK(ENTITY_TYPES.TAG),
+      },
+    }),
+  );
+
+  return result.Item || null;
+};

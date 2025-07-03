@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { sendContactFormEmail } from "@/API";
+import { sendContactFormEmail } from "@/lib/email";
 
 const contactFormSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),

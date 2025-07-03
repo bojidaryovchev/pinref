@@ -1,5 +1,5 @@
 /**
- * Centralized API functions for server and client-side data fetching
+ * Centralized API functions for client-side data fetching
  */
 
 import { 
@@ -15,53 +15,9 @@ import {
   Tag, 
   CreateTagInput 
 } from "./schemas/tag.schema";
-import { SendEmailCommand, SESv2Client } from "@aws-sdk/client-sesv2";
-import { Resource } from "sst";
 import { 
-  CONTACT_EMAIL, 
   API_ENDPOINTS
 } from "./constants";
-import type { ContactFormPayload } from "@/types/contact-form-payload";
-
-// SERVER-SIDE EMAIL FUNCTIONALITY (EXISTING)
-export const sendContactFormEmail = async ({ name, email, message }: ContactFormPayload) => {
-  const client = new SESv2Client();
-
-  const htmlContent = `
-    <div style="font-family: sans-serif; line-height: 1.5;">
-      <h2>New Contact Form Submission</h2>
-      <p><strong>Name:</strong> ${name}</p>
-      <p><strong>Email:</strong> ${email}</p>
-      <p><strong>Message:</strong></p>
-      <p style="white-space: pre-wrap;">${message}</p>
-    </div>
-  `;
-
-  await client.send(
-    new SendEmailCommand({
-      FromEmailAddress: `noreply@${Resource.NextEmail.sender}`,
-      Destination: {
-        ToAddresses: [CONTACT_EMAIL],
-      },
-      Content: {
-        Simple: {
-          Subject: {
-            Data: "New Contact Form Submission",
-            Charset: "UTF-8",
-          },
-          Body: {
-            Html: {
-              Data: htmlContent,
-              Charset: "UTF-8",
-            },
-          },
-        },
-      },
-    })
-  );
-
-  return { success: true };
-};
 
 // CLIENT-SIDE API FUNCTIONS
 

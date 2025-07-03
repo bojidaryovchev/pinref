@@ -1,6 +1,5 @@
 import { authOptions } from "@/lib/auth";
-import { deleteBookmark, getUserBookmarks, updateBookmark } from "@/lib/dynamodb";
-import type { Bookmark } from "@/types/bookmark.interface";
+import { deleteBookmark, getBookmarkById, updateBookmark } from "@/lib/dynamodb";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -13,19 +12,23 @@ const updateBookmarkSchema = z.object({
   isFavorite: z.boolean().optional(),
 });
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // For simplicity, get all user bookmarks and find the one we want
-    // In a real implementation, you'd want a getBookmarkById function
-    const result = await getUserBookmarks(session.user.email, { limit: 1000 });
-    const bookmark = (result.items as Bookmark[]).find((item) => item.id === params.id);
+    const bookmark = await getBookmarkById(id);
 
     if (!bookmark) {
+      return NextResponse.json({ error: "Bookmark not found" }, { status: 404 });
+    }
+
+    // Verify the bookmark belongs to the current user
+    const bookmarkData = bookmark as { userId?: string };
+    if (bookmarkData.userId !== session.user.email) {
       return NextResponse.json({ error: "Bookmark not found" }, { status: 404 });
     }
 
@@ -36,8 +39,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -46,7 +50,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const body = await request.json();
     const updateData = updateBookmarkSchema.parse(body);
 
-    const bookmark = await updateBookmark(params.id, updateData);
+    const bookmark = await updateBookmark(id, updateData);
 
     return NextResponse.json(bookmark);
   } catch (error) {
@@ -58,14 +62,15 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await deleteBookmark(params.id);
+    await deleteBookmark(id);
 
     return NextResponse.json({ success: true });
   } catch (error) {
