@@ -151,6 +151,9 @@ export function generateSearchTokens(text: string): string[] {
 
 /**
  * Generate search tokens for a query to match against stored n-grams
+ * 
+ * This version prioritizes exact phrase matching while still maintaining
+ * good fuzzy search capabilities.
  */
 export function generateQueryTokens(query: string): string[] {
   if (!query) return [];
@@ -158,26 +161,43 @@ export function generateQueryTokens(query: string): string[] {
   const normalizedQuery = query.toLowerCase().trim();
   const tokens = new Set<string>();
 
-  // Add the full query
+  // Create a structure to track token types for scoring
+  const exactPhraseToken = `__exact__:${normalizedQuery}`;
+  
+  // Add the exact phrase token with a special prefix for exact matching
+  tokens.add(exactPhraseToken);
+  
+  // Add the full query as is (still important)
   tokens.add(normalizedQuery);
 
   // Add individual words
   const words = normalizedQuery.split(/\s+/).filter((word) => word.length > 0);
   for (const word of words) {
-    tokens.add(word);
-
-    // Add prefixes of each word for autocomplete-style matching
-    for (let i = 1; i <= word.length; i++) {
-      tokens.add(word.slice(0, i));
+    if (word.length >= 2) {
+      tokens.add(word);
+  
+      // Only add prefixes for words 3+ characters to reduce noise
+      if (word.length >= 3) {
+        // Add prefixes of each word for autocomplete-style matching
+        // But limit to meaningful prefixes (at least 3 characters)
+        for (let i = 3; i <= word.length; i++) {
+          tokens.add(word.slice(0, i));
+        }
+      }
     }
   }
 
-  // Add character n-grams for partial matching
-  for (let i = 0; i < normalizedQuery.length; i++) {
-    for (let j = i + 2; j <= Math.min(i + 8, normalizedQuery.length); j++) {
-      const ngram = normalizedQuery.slice(i, j);
-      if (!ngram.match(/^\s+$/) && !ngram.match(/\s{2,}/)) {
-        tokens.add(ngram);
+  // Reduce the number of n-grams to minimize noise
+  // Only generate n-grams for short queries (less than 3 words)
+  if (words.length < 3) {
+    // Add character n-grams for partial matching
+    // More selective - only 3-5 character n-grams
+    for (let i = 0; i < normalizedQuery.length; i++) {
+      for (let j = i + 3; j <= Math.min(i + 5, normalizedQuery.length); j++) {
+        const ngram = normalizedQuery.slice(i, j);
+        if (!ngram.match(/^\s+$/) && !ngram.match(/\s{2,}/)) {
+          tokens.add(ngram);
+        }
       }
     }
   }

@@ -9,8 +9,9 @@ import type { BookmarkWithScore } from "@/types/bookmark-with-score.interface";
  * Calculate the search score based on token overlap between query and bookmark tokens
  * Higher score = better match
  *
- * Scoring rules:
- * - Exact match: 10 points
+ * Enhanced scoring rules:
+ * - Exact phrase match: 100 points (highest priority)
+ * - Exact token match: 10 points
  * - Prefix match: 5 points (token starts with query or vice versa)
  * - Partial match: 1 point (token contains query or vice versa)
  *
@@ -26,10 +27,41 @@ export function calculateSearchScore(queryTokens: string[], bookmarkTokens: stri
     return score;
   }
 
-  for (const queryToken of queryTokens) {
+  // Extract the exact phrase query if it exists
+  const exactPhraseQueries = queryTokens.filter((token) => token.startsWith("__exact__:"));
+
+  // Process exact phrase matches first (highest priority)
+  if (exactPhraseQueries.length > 0) {
+    for (const exactQuery of exactPhraseQueries) {
+      const exactPhrase = exactQuery.substring(9); // Remove '__exact__:' prefix
+
+      // Check if any bookmark token exactly matches the search phrase
+      for (const bookmarkToken of bookmarkTokens) {
+        if (bookmarkToken === exactPhrase) {
+          // Exact phrase match - highest possible score
+          score += 100;
+          break;
+        }
+      }
+
+      // Also check if any bookmark content contains this exact phrase
+      // For multi-word phrases, this is important
+      if (exactPhrase.includes(" ")) {
+        const combinedContent = bookmarkTokens.join(" ").toLowerCase();
+        if (combinedContent.includes(exactPhrase)) {
+          score += 50;
+        }
+      }
+    }
+  }
+
+  // Regular token matching for the rest (filtered to remove special tokens)
+  const regularQueryTokens = queryTokens.filter((token) => !token.startsWith("__exact__:"));
+
+  for (const queryToken of regularQueryTokens) {
     for (const bookmarkToken of bookmarkTokens) {
       if (bookmarkToken.includes(queryToken) || queryToken.includes(bookmarkToken)) {
-        // Exact matches get highest score
+        // Exact matches get high score
         if (bookmarkToken === queryToken) {
           score += 10;
         }

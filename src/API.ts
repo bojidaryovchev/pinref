@@ -1,15 +1,17 @@
+"use server";
+
 /**
  * Centralized API functions for client-side data fetching
  * Implements server actions with tag-based cache invalidation
  */
 
+import { revalidateTag } from "next/cache";
 import { API_ENDPOINTS, CACHE_TAGS } from "./constants";
 import { Bookmark, BookmarkQueryOptions, CreateBookmarkInput } from "./schemas/bookmark.schema";
 import { Category, CreateCategoryInput } from "./schemas/category.schema";
 import { CreateTagInput, Tag } from "./schemas/tag.schema";
 import { UpdateUserSettingsInput } from "./schemas/user-settings.schema";
 import { UserSettings } from "./schemas/user.schema";
-import { revalidateTag } from "next/cache";
 
 // SERVER ACTIONS WITH TAG-BASED CACHE INVALIDATION
 
@@ -93,7 +95,7 @@ export const getBookmarks = async (
   const url = `${API_ENDPOINTS.BOOKMARKS}?${params.toString()}`;
   const response = await fetch(url, {
     credentials: "include", // Include credentials for authentication
-    next: { tags: [CACHE_TAGS.BOOKMARKS] } // Add tag for cache invalidation
+    next: { tags: [CACHE_TAGS.BOOKMARKS] }, // Add tag for cache invalidation
   });
 
   if (!response.ok) {
@@ -107,7 +109,7 @@ export const getBookmarks = async (
 export const getBookmark = async (id: string): Promise<Bookmark> => {
   const response = await fetch(API_ENDPOINTS.BOOKMARK_BY_ID(id), {
     credentials: "include", // Include credentials for authentication
-    next: { tags: [CACHE_TAGS.BOOKMARKS] }
+    next: { tags: [CACHE_TAGS.BOOKMARKS] },
   });
 
   if (!response.ok) {
@@ -132,7 +134,7 @@ export const createBookmark = async (data: CreateBookmarkInput): Promise<Bookmar
 
   // Invalidate bookmarks cache after creating a new bookmark
   invalidateBookmarksCache();
-  
+
   return response.json();
 };
 
@@ -151,7 +153,7 @@ export const updateBookmark = async (id: string, data: Partial<CreateBookmarkInp
 
   // Invalidate bookmarks cache after updating a bookmark
   invalidateBookmarksCache();
-  
+
   return response.json();
 };
 
@@ -165,7 +167,7 @@ export const deleteBookmark = async (id: string): Promise<void> => {
   if (!response.ok) {
     throw new Error("Failed to delete bookmark");
   }
-  
+
   // Invalidate bookmarks cache after deleting a bookmark
   invalidateBookmarksCache();
 };
@@ -182,7 +184,7 @@ export const toggleBookmarkFavorite = async (id: string, isFavorite: boolean): P
   if (!response.ok) {
     throw new Error("Failed to update favorite status");
   }
-  
+
   // Invalidate bookmarks cache after updating favorite status
   invalidateBookmarksCache();
 
@@ -197,7 +199,7 @@ export const toggleBookmarkFavorite = async (id: string, isFavorite: boolean): P
 export const getCategories = async (): Promise<Category[]> => {
   const response = await fetch(API_ENDPOINTS.CATEGORIES, {
     credentials: "include", // Include credentials for authentication
-    next: { tags: [CACHE_TAGS.CATEGORIES] }
+    next: { tags: [CACHE_TAGS.CATEGORIES] },
   });
 
   if (!response.ok) {
@@ -211,7 +213,7 @@ export const getCategories = async (): Promise<Category[]> => {
 export const getCategory = async (id: string): Promise<Category> => {
   const response = await fetch(API_ENDPOINTS.CATEGORY_BY_ID(id), {
     credentials: "include", // Include credentials for authentication
-    next: { tags: [CACHE_TAGS.CATEGORIES] }
+    next: { tags: [CACHE_TAGS.CATEGORIES] },
   });
 
   if (!response.ok) {
@@ -233,7 +235,7 @@ export const createCategory = async (data: CreateCategoryInput): Promise<Categor
   if (!response.ok) {
     throw new Error("Failed to create category");
   }
-  
+
   // Invalidate categories cache after creating a new category
   invalidateCategoriesCache();
   // May affect bookmarks display that use categories
@@ -254,7 +256,7 @@ export const updateCategory = async (id: string, data: Partial<CreateCategoryInp
   if (!response.ok) {
     throw new Error("Failed to update category");
   }
-  
+
   // Invalidate categories cache after updating a category
   invalidateCategoriesCache();
   // May affect bookmarks display that use this category
@@ -273,7 +275,7 @@ export const deleteCategory = async (id: string): Promise<void> => {
   if (!response.ok) {
     throw new Error("Failed to delete category");
   }
-  
+
   // Invalidate categories cache after deleting a category
   invalidateCategoriesCache();
   // May affect bookmarks display that use this category
@@ -288,7 +290,7 @@ export const deleteCategory = async (id: string): Promise<void> => {
 export const getTags = async (): Promise<Tag[]> => {
   const response = await fetch(API_ENDPOINTS.TAGS, {
     credentials: "include", // Include credentials for authentication
-    next: { tags: [CACHE_TAGS.TAGS] }
+    next: { tags: [CACHE_TAGS.TAGS] },
   });
 
   if (!response.ok) {
@@ -302,7 +304,7 @@ export const getTags = async (): Promise<Tag[]> => {
 export const getTag = async (id: string): Promise<Tag> => {
   const response = await fetch(API_ENDPOINTS.TAG_BY_ID(id), {
     credentials: "include", // Include credentials for authentication
-    next: { tags: [CACHE_TAGS.TAGS] }
+    next: { tags: [CACHE_TAGS.TAGS] },
   });
 
   if (!response.ok) {
@@ -324,7 +326,7 @@ export const createTag = async (data: CreateTagInput): Promise<Tag> => {
   if (!response.ok) {
     throw new Error("Failed to create tag");
   }
-  
+
   // Invalidate tags cache after creating a new tag
   invalidateTagsCache();
   // May affect bookmarks display that use tags
@@ -345,7 +347,7 @@ export const updateTag = async (id: string, data: Partial<CreateTagInput>): Prom
   if (!response.ok) {
     throw new Error("Failed to update tag");
   }
-  
+
   // Invalidate tags cache after updating a tag
   invalidateTagsCache();
   // May affect bookmarks display that use this tag
@@ -364,7 +366,7 @@ export const deleteTag = async (id: string): Promise<void> => {
   if (!response.ok) {
     throw new Error("Failed to delete tag");
   }
-  
+
   // Invalidate tags cache after deleting a tag
   invalidateTagsCache();
   // May affect bookmarks display that use this tag
@@ -379,7 +381,7 @@ export const deleteTag = async (id: string): Promise<void> => {
 export const getUserSettings = async (): Promise<UserSettings> => {
   const response = await fetch(API_ENDPOINTS.USER_SETTINGS, {
     credentials: "include", // Include credentials for authentication
-    next: { tags: [CACHE_TAGS.USER_SETTINGS] }
+    next: { tags: [CACHE_TAGS.USER_SETTINGS] },
   });
 
   if (!response.ok) {
@@ -401,7 +403,7 @@ export const updateUserSettings = async (data: UpdateUserSettingsInput): Promise
   if (!response.ok) {
     throw new Error("Failed to update user settings");
   }
-  
+
   // Invalidate user settings cache after updating
   invalidateUserSettingsCache();
 
@@ -426,7 +428,7 @@ export const rebuildSearchIndex = async (): Promise<{ success: boolean; count: n
     const errorData = await response.json();
     throw new Error(errorData.error || "Failed to rebuild search index");
   }
-  
+
   // Invalidate bookmarks cache after rebuilding the search index
   invalidateBookmarksCache();
   // Invalidate search index cache

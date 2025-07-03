@@ -537,9 +537,20 @@ export const deleteTag = async (tagId: string) => {
 export const searchBookmarks = async (userId: string, searchTokens: string[]): Promise<BookmarkWithScore[]> => {
   if (!searchTokens.length) return [];
 
-  // Limit to first 5 tokens for better performance
-  // Tokens earlier in the query are usually more important
-  const queryTokens = searchTokens.slice(0, 5);
+  // Separate exact phrase tokens from regular tokens
+  const exactPhraseTokens = searchTokens
+    .filter((token) => token.startsWith("__exact__:"))
+    .map((token) => token.substring(9)); // Remove '__exact__:' prefix
+
+  // Regular search tokens (excluding special exact phrase tokens)
+  const regularTokens = searchTokens.filter((token) => !token.startsWith("__exact__:"));
+
+  // Include exact phrase without the prefix in the tokens
+  const allSearchTokens = [...regularTokens, ...exactPhraseTokens];
+
+  // Limit to first 6 tokens for better performance
+  // But make sure we keep at least one exact phrase token if present
+  const queryTokens = allSearchTokens.slice(0, 6);
 
   // For each search token, query the inverted index to find matching bookmarks
   const bookmarkIdSets: Set<string>[] = [];
