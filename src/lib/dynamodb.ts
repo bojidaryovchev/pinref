@@ -446,33 +446,13 @@ export const searchBookmarks = async (userId: string, searchTokens: string[]): P
   const result = await dynamodb.send(new QueryCommand(params));
   const items = result.Items || [];
 
-  // Calculate scores for ranking (still needed for better relevance sorting)
-  const scoredResults = items.map((item) => {
-    const bookmark = item as BookmarkWithScore;
-    const bookmarkTokens = bookmark.searchTokens || [];
-    let score = 0;
-
-    // Calculate match score based on token overlap
-    for (const queryToken of searchTokens) {
-      for (const bookmarkToken of bookmarkTokens) {
-        if (bookmarkToken.includes(queryToken) || queryToken.includes(bookmarkToken)) {
-          // Exact matches get higher score
-          if (bookmarkToken === queryToken) {
-            score += 10;
-          } else if (bookmarkToken.startsWith(queryToken) || queryToken.startsWith(bookmarkToken)) {
-            score += 5;
-          } else {
-            score += 1;
-          }
-        }
-      }
-    }
-
-    return { ...bookmark, searchScore: score };
-  });
-
-  // Sort by score (highest first) and return
-  return scoredResults.sort((a, b) => b.searchScore - a.searchScore);
+  // Import here to avoid circular dependencies
+  const { applySearchScoring, sortBySearchScore } = await import('./search-utils');
+  
+  // Apply scoring algorithm and sort by relevance
+  const scoredResults = sortBySearchScore(applySearchScoring(items, searchTokens));
+  
+  return scoredResults;
 }
 
 // Get a category by ID
