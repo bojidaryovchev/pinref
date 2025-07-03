@@ -90,7 +90,8 @@ export const createBookmark = async (bookmarkData: BookmarkData) => {
     categoryId: bookmarkData.categoryId,
     tagIds: bookmarkData.tagIds || [],
     isFavorite: bookmarkData.isFavorite || false,
-    searchTokens: bookmarkData.searchTokens || [],
+    // Convert searchTokens array to JSON string to match the schema
+    searchTokens: JSON.stringify(bookmarkData.searchTokens || []),
     createdAt: now,
     updatedAt: now,
   };
@@ -435,6 +436,7 @@ export const searchBookmarks = async (userId: string, searchTokens: string[]): P
   if (searchTokens.length > 0) {
     // Create filter expressions for each token
     const tokenFilters = searchTokens.map((token, index) => {
+      // Since searchTokens is now a JSON string, we need to check if the token is in the string
       params.ExpressionAttributeValues![`:token${index}`] = token;
       return `contains(searchTokens, :token${index})`;
     });

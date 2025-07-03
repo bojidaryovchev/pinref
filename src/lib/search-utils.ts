@@ -70,7 +70,10 @@ export function applySearchScoring(
 ): BookmarkWithScore[] {
   return bookmarks.map((item) => {
     const bookmark = item as BookmarkWithScore;
-    const bookmarkTokens = bookmark.searchTokens || [];
+    // Parse the JSON string back to an array of tokens
+    const bookmarkTokens = typeof bookmark.searchTokens === 'string' 
+      ? JSON.parse(bookmark.searchTokens || '[]')
+      : bookmark.searchTokens || [];
     
     return {
       ...bookmark,
