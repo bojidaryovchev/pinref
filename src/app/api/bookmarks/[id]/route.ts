@@ -1,17 +1,10 @@
 import { authOptions } from "@/lib/auth";
 import { deleteBookmark, getBookmarkById, updateBookmark } from "@/lib/dynamodb";
 import { decryptBookmarkData } from "@/lib/encryption";
+import { updateBookmarkSchema } from "@/schemas/bookmark.schema";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-
-const updateBookmarkSchema = z.object({
-  title: z.string().optional(),
-  description: z.string().optional(),
-  categoryId: z.string().optional(),
-  tagIds: z.array(z.string()).optional(),
-  isFavorite: z.boolean().optional(),
-});
 
 export async function GET(
   request: NextRequest, 

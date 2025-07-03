@@ -14,6 +14,16 @@ export const createTagSchema = z.object({
 export type CreateTagInput = z.infer<typeof createTagSchema>;
 
 /**
+ * Schema for updating an existing tag
+ */
+export const updateTagSchema = z.object({
+  name: z.string().min(1).max(30).optional(),
+  icon: z.string().optional(),
+});
+
+export type UpdateTagInput = z.infer<typeof updateTagSchema>;
+
+/**
  * Schema for tag data returned from API
  */
 export const tagSchema = z.object({

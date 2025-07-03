@@ -15,6 +15,12 @@ import {
   Tag, 
   CreateTagInput 
 } from "./schemas/tag.schema";
+import {
+  UserSettings
+} from "./schemas/user.schema";
+import {
+  UpdateUserSettingsInput
+} from "./schemas/user-settings.schema";
 import { 
   API_ENDPOINTS
 } from "./constants";
@@ -252,4 +258,34 @@ export const deleteTag = async (id: string): Promise<void> => {
   if (!response.ok) {
     throw new Error('Failed to delete tag');
   }
+};
+
+/**
+ * User Settings API Functions
+ */
+
+// Get user settings
+export const getUserSettings = async (): Promise<UserSettings> => {
+  const response = await fetch(API_ENDPOINTS.USER_SETTINGS);
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch user settings');
+  }
+  
+  return response.json();
+};
+
+// Update user settings
+export const updateUserSettings = async (data: UpdateUserSettingsInput): Promise<UserSettings> => {
+  const response = await fetch(API_ENDPOINTS.USER_SETTINGS, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to update user settings');
+  }
+  
+  return response.json();
 };

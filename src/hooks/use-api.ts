@@ -2,27 +2,27 @@
  * SWR hooks for data fetching with automatic revalidation
  */
 
-import { 
-  API_ENDPOINTS, 
-  SWR_CONFIG
-} from "@/constants";
+import {
+  createBookmark,
+  createCategory,
+  createTag,
+  deleteBookmark,
+  deleteCategory,
+  deleteTag,
+  toggleBookmarkFavorite,
+  updateBookmark,
+  updateCategory,
+  updateTag,
+  updateUserSettings,
+} from "@/API";
+import { API_ENDPOINTS, SWR_CONFIG } from "@/constants";
+import type { Bookmark, BookmarkQueryOptions, CreateBookmarkInput } from "@/schemas/bookmark.schema";
+import type { Category, CreateCategoryInput } from "@/schemas/category.schema";
+import type { CreateTagInput, Tag } from "@/schemas/tag.schema";
+import type { UpdateUserSettingsInput } from "@/schemas/user-settings.schema";
+import type { UserSettings } from "@/schemas/user.schema";
 import { fetcher } from "@/swr";
 import useSWR from "swr";
-import { 
-  createBookmark,
-  updateBookmark,
-  deleteBookmark,
-  toggleBookmarkFavorite,
-  createCategory,
-  updateCategory,
-  deleteCategory,
-  createTag,
-  updateTag,
-  deleteTag
-} from "@/API";
-import type { BookmarkQueryOptions, Bookmark, CreateBookmarkInput } from "@/schemas/bookmark.schema";
-import type { Category, CreateCategoryInput } from "@/schemas/category.schema";
-import type { Tag, CreateTagInput } from "@/schemas/tag.schema";
 
 /**
  * Hook for bookmark data with optional filtering
@@ -30,59 +30,59 @@ import type { Tag, CreateTagInput } from "@/schemas/tag.schema";
 export function useBookmarks(options: BookmarkQueryOptions = { limit: 20 }) {
   // Build query string for the SWR key
   const params = new URLSearchParams();
-  if (options.limit) params.append('limit', options.limit.toString());
-  if (options.categoryId) params.append('category', options.categoryId);
-  if (options.tagId) params.append('tag', options.tagId);
-  if (options.isFavorite) params.append('favorite', 'true');
-  if (options.query) params.append('q', options.query);
-  
+  if (options.limit) params.append("limit", options.limit.toString());
+  if (options.categoryId) params.append("category", options.categoryId);
+  if (options.tagId) params.append("tag", options.tagId);
+  if (options.isFavorite) params.append("favorite", "true");
+  if (options.query) params.append("q", options.query);
+
   const queryString = params.toString();
-  const url = `${API_ENDPOINTS.BOOKMARKS}${queryString ? `?${queryString}` : ''}`;
-  
+  const url = `${API_ENDPOINTS.BOOKMARKS}${queryString ? `?${queryString}` : ""}`;
+
   const { data, error, isLoading, mutate } = useSWR<{
     bookmarks: Bookmark[];
-    pagination: { 
-      page: number; 
-      limit: number; 
-      total: number; 
-      totalPages: number; 
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
     };
   }>(url, fetcher, {
     refreshInterval: SWR_CONFIG.REFRESH_INTERVAL,
   });
-  
+
   // Helper function to refresh data
   const refreshBookmarks = async () => {
     await mutate();
   };
-  
+
   // Helper function to add a new bookmark
   const addBookmark = async (bookmarkData: CreateBookmarkInput): Promise<Bookmark> => {
     const newBookmark = await createBookmark(bookmarkData);
     await mutate();
     return newBookmark;
   };
-  
+
   // Helper function to update a bookmark
   const updateBookmarkItem = async (id: string, bookmarkData: Partial<CreateBookmarkInput>): Promise<Bookmark> => {
     const updatedBookmark = await updateBookmark(id, bookmarkData);
     await mutate();
     return updatedBookmark;
   };
-  
+
   // Helper function to delete a bookmark
   const removeBookmark = async (id: string): Promise<void> => {
     await deleteBookmark(id);
     await mutate();
   };
-  
+
   // Helper function to toggle favorite status
   const toggleFavorite = async (id: string, isFavorite: boolean): Promise<Bookmark> => {
     const updatedBookmark = await toggleBookmarkFavorite(id, isFavorite);
     await mutate();
     return updatedBookmark;
   };
-  
+
   return {
     bookmarks: data?.bookmarks || [],
     pagination: data?.pagination || { page: 1, limit: options.limit || 20, total: 0, totalPages: 1 },
@@ -103,32 +103,32 @@ export function useCategories() {
   const { data, error, isLoading, mutate } = useSWR<Category[]>(API_ENDPOINTS.CATEGORIES, fetcher, {
     refreshInterval: SWR_CONFIG.REFRESH_INTERVAL,
   });
-  
+
   // Helper function to refresh data
   const refreshCategories = async () => {
     await mutate();
   };
-  
+
   // Helper function to add a new category
   const addCategory = async (categoryData: CreateCategoryInput): Promise<Category> => {
     const newCategory = await createCategory(categoryData);
     await mutate();
     return newCategory;
   };
-  
+
   // Helper function to update a category
   const updateCategoryItem = async (id: string, categoryData: Partial<CreateCategoryInput>): Promise<Category> => {
     const updatedCategory = await updateCategory(id, categoryData);
     await mutate();
     return updatedCategory;
   };
-  
+
   // Helper function to delete a category
   const removeCategory = async (id: string): Promise<void> => {
     await deleteCategory(id);
     await mutate();
   };
-  
+
   return {
     categories: data || [],
     isLoading,
@@ -147,32 +147,32 @@ export function useTags() {
   const { data, error, isLoading, mutate } = useSWR<Tag[]>(API_ENDPOINTS.TAGS, fetcher, {
     refreshInterval: SWR_CONFIG.REFRESH_INTERVAL,
   });
-  
+
   // Helper function to refresh data
   const refreshTags = async () => {
     await mutate();
   };
-  
+
   // Helper function to add a new tag
   const addTag = async (tagData: CreateTagInput): Promise<Tag> => {
     const newTag = await createTag(tagData);
     await mutate();
     return newTag;
   };
-  
+
   // Helper function to update a tag
   const updateTagItem = async (id: string, tagData: Partial<CreateTagInput>): Promise<Tag> => {
     const updatedTag = await updateTag(id, tagData);
     await mutate();
     return updatedTag;
   };
-  
+
   // Helper function to delete a tag
   const removeTag = async (id: string): Promise<void> => {
     await deleteTag(id);
     await mutate();
   };
-  
+
   return {
     tags: data || [],
     isLoading,
@@ -181,5 +181,38 @@ export function useTags() {
     addTag,
     updateTag: updateTagItem,
     removeTag,
+  };
+}
+
+/**
+ * Hook for user settings data
+ */
+export function useUserSettings() {
+  const { data, error, isLoading, mutate } = useSWR<UserSettings>(API_ENDPOINTS.USER_SETTINGS, fetcher, {
+    refreshInterval: SWR_CONFIG.REFRESH_INTERVAL,
+  });
+
+  // Helper function to refresh data
+  const refreshUserSettings = async () => {
+    await mutate();
+  };
+
+  // Helper function to update settings
+  const updateSettings = async (settingsData: UpdateUserSettingsInput): Promise<UserSettings> => {
+    const updatedSettings = await updateUserSettings(settingsData);
+    await mutate();
+    return updatedSettings;
+  };
+
+  return {
+    settings: data || {
+      theme: "system",
+      defaultView: "grid",
+      bookmarksPerPage: 20,
+    },
+    isLoading,
+    error,
+    refreshUserSettings,
+    updateSettings,
   };
 }

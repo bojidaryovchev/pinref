@@ -484,3 +484,58 @@ export const getTagById = async (tagId: string): Promise<unknown | null> => {
 
   return result.Item || null;
 };
+
+import type { UserSettings } from "@/schemas/user.schema";
+import type { UpdateUserSettingsInput } from "@/schemas/user-settings.schema";
+
+// Get user settings
+export const getUserSettings = async (userId: string): Promise<UserSettings | null> => {
+  const result = await dynamodb.send(
+    new GetCommand({
+      TableName: TABLE_NAME,
+      Key: {
+        PK: createPK(ENTITY_TYPES.USER, userId),
+        SK: "SETTINGS",
+      },
+    }),
+  );
+
+  return result.Item as UserSettings | null;
+};
+
+// Update user settings
+export const updateUserSettings = async (userId: string, data: UpdateUserSettingsInput): Promise<UserSettings> => {
+  const now = new Date().toISOString();
+  
+  const updateExpression: string[] = [];
+  const expressionAttributeNames: Record<string, string> = {};
+  const expressionAttributeValues: Record<string, unknown> = {};
+  
+  // Add each field to the update expression
+  Object.entries(data).forEach(([key, value]) => {
+    updateExpression.push(`#${key} = :${key}`);
+    expressionAttributeNames[`#${key}`] = key;
+    expressionAttributeValues[`:${key}`] = value;
+  });
+  
+  // Add updated timestamp
+  updateExpression.push('#updatedAt = :updatedAt');
+  expressionAttributeNames['#updatedAt'] = 'updatedAt';
+  expressionAttributeValues[':updatedAt'] = now;
+  
+  const params = {
+    TableName: TABLE_NAME,
+    Key: {
+      PK: createPK(ENTITY_TYPES.USER, userId),
+      SK: "SETTINGS",
+    },
+    UpdateExpression: `SET ${updateExpression.join(', ')}`,
+    ExpressionAttributeNames: expressionAttributeNames,
+    ExpressionAttributeValues: expressionAttributeValues,
+    ReturnValues: "ALL_NEW" as const,
+  };
+  
+  const result = await dynamodb.send(new UpdateCommand(params));
+  
+  return result.Attributes as UserSettings;
+};

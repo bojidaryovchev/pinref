@@ -1,15 +1,10 @@
 import { authOptions } from "@/lib/auth";
 import { deleteCategory, getCategoryById, updateCategory } from "@/lib/dynamodb";
 import { encryptCategoryData, decryptCategoryData } from "@/lib/encryption";
+import { updateCategorySchema } from "@/schemas/category.schema";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-
-const updateCategorySchema = z.object({
-  name: z.string().min(1).max(50).optional(),
-  icon: z.string().min(1).optional(),
-  color: z.string().min(1).optional(),
-});
 
 export async function GET(
   request: NextRequest, 
@@ -104,7 +99,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {

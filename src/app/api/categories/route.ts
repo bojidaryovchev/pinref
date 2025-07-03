@@ -1,16 +1,11 @@
 import { authOptions } from "@/lib/auth";
 import { createCategory, getUserCategories } from "@/lib/dynamodb";
 import { encryptCategoryData } from "@/lib/encryption";
+import { createCategorySchema } from "@/schemas/category.schema";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
-
-const createCategorySchema = z.object({
-  name: z.string().min(1).max(50),
-  icon: z.string().min(1),
-  color: z.string().min(1),
-});
 
 export async function GET() {
   try {

@@ -15,6 +15,19 @@ export const createBookmarkSchema = z.object({
 export type CreateBookmarkInput = z.infer<typeof createBookmarkSchema>;
 
 /**
+ * Schema for updating an existing bookmark
+ */
+export const updateBookmarkSchema = z.object({
+  title: z.string().optional(),
+  description: z.string().optional(),
+  categoryId: z.string().optional(),
+  tagIds: z.array(z.string()).optional(),
+  isFavorite: z.boolean().optional(),
+});
+
+export type UpdateBookmarkInput = z.infer<typeof updateBookmarkSchema>;
+
+/**
  * Schema for bookmark data returned from API
  */
 export const bookmarkSchema = z.object({

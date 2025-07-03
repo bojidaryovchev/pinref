@@ -1,13 +1,10 @@
 import { authOptions } from "@/lib/auth";
 import { createTag, getUserTags } from "@/lib/dynamodb";
+import { createTagSchema } from "@/schemas/tag.schema";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
-
-const createTagSchema = z.object({
-  name: z.string().min(1).max(30),
-});
 
 export async function GET() {
   try {

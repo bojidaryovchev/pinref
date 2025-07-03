@@ -95,6 +95,7 @@ export const API_ENDPOINTS = {
   TAGS: "/api/tags",
   TAG_BY_ID: (id: string) => `/api/tags/${id}`,
   CONTACT: "/api/contact",
+  USER_SETTINGS: "/api/user/settings",
 };
 
 /** SWR Configuration */

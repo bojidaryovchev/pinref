@@ -1,21 +1,17 @@
 import { authOptions } from "@/lib/auth";
 import { deleteTag, getTagById, updateTag } from "@/lib/dynamodb";
 import { encryptTagData, decryptTagData } from "@/lib/encryption";
+import { updateTagSchema } from "@/schemas/tag.schema";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-const updateTagSchema = z.object({
-  name: z.string().min(1).max(30).optional(),
-  icon: z.string().optional(),
-});
-
 export async function GET(
   request: NextRequest, 
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -47,10 +43,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest, 
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -98,10 +94,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest, 
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
