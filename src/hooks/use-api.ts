@@ -14,6 +14,7 @@ import {
   updateCategory,
   updateTag,
   updateUserSettings,
+  rebuildSearchIndex,
 } from "@/API";
 import { API_ENDPOINTS, SWR_CONFIG } from "@/constants";
 import type { Bookmark, BookmarkQueryOptions, CreateBookmarkInput } from "@/schemas/bookmark.schema";
@@ -226,5 +227,42 @@ export function useUserSettings() {
     error,
     refreshUserSettings,
     updateSettings,
+  };
+}
+
+/**
+ * Hook for rebuilding the search index
+ */
+export function useRebuildSearchIndex() {
+  const { data, error, isLoading, mutate } = useSWR<{
+    success: boolean;
+    count: number;
+    message: string;
+  } | null>(null, null);
+
+  const rebuild = async () => {
+    try {
+      // Start loading
+      mutate(undefined, false);
+      
+      // Call the API
+      const result = await rebuildSearchIndex();
+      
+      // Update with the result
+      mutate(result, false);
+      
+      return result;
+    } catch (error) {
+      // Update with the error
+      mutate(null, false);
+      throw error;
+    }
+  };
+
+  return {
+    result: data,
+    error,
+    isLoading,
+    rebuild,
   };
 }

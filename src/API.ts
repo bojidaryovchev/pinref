@@ -314,3 +314,25 @@ export const updateUserSettings = async (data: UpdateUserSettingsInput): Promise
   
   return response.json();
 };
+
+/**
+ * Search Index API Functions
+ */
+
+// Rebuild the search index for the authenticated user
+export const rebuildSearchIndex = async (): Promise<{ success: boolean; count: number; message: string }> => {
+  const response = await fetch(API_ENDPOINTS.REBUILD_SEARCH_INDEX, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to rebuild search index');
+  }
+
+  return await response.json();
+};

@@ -19,6 +19,7 @@ import { Database, Palette, Settings, Shield, User } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useRebuildSearchIndex } from "@/hooks/use-api";
 
 const SettingsDialog: React.FC = () => {
   const [open, setOpen] = useState(false);
@@ -44,8 +45,18 @@ const SettingsDialog: React.FC = () => {
     toast.success("Import functionality - this would allow uploading bookmark files");
   };
 
-  const handleClearCache = () => {
-    toast.success("Cache cleared");
+  // Use the rebuild search index hook
+  const { rebuild, isLoading: isRebuildingIndex } = useRebuildSearchIndex();
+  
+  const handleRebuildSearchIndex = async () => {
+    try {
+      toast.loading("Rebuilding search index...", { id: "rebuild-index" });
+      const result = await rebuild();
+      toast.success(`Search index rebuilt successfully! ${result.count} bookmarks indexed.`, { id: "rebuild-index" });
+    } catch (error) {
+      toast.error("Failed to rebuild search index. Please try again.", { id: "rebuild-index" });
+      console.error("Error rebuilding search index:", error);
+    }
   };
 
   return (
@@ -214,8 +225,13 @@ const SettingsDialog: React.FC = () => {
                   <p>• Search tokens are generated for titles, descriptions, and domains</p>
                   <p>• Encrypted search maintains privacy while enabling functionality</p>
                 </div>
-                <Button onClick={handleClearCache} variant="outline" size="sm">
-                  Rebuild Search Index
+                <Button 
+                  onClick={handleRebuildSearchIndex}
+                  variant="outline"
+                  size="sm"
+                  disabled={isRebuildingIndex}
+                >
+                  {isRebuildingIndex ? "Rebuilding..." : "Rebuild Search Index"}
                 </Button>
               </div>
 

@@ -8,4 +8,5 @@ export interface DynamoDBParams {
   ScanIndexForward?: boolean;
   Limit?: number;
   ExclusiveStartKey?: Record<string, unknown>;
+  ProjectionExpression?: string; // Added for selecting specific attributes
 }

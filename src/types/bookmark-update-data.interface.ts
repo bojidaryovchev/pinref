@@ -4,4 +4,5 @@ export interface BookmarkUpdateData {
   categoryId?: string;
   tagIds?: string[];
   isFavorite?: boolean;
+  searchTokens?: string[]; // Added for search index updates
 }

@@ -33,7 +33,8 @@ export default $config({
         GSI1SK: "string", // GSI1 Sort Key: ENTITY#timestamp
         entityType: "string", // For filtering: USER, BOOKMARK, CATEGORY, TAG
         userId: "string", // For user data isolation
-        searchTokens: "string", // For search functionality (stored as JSON)
+        token: "string", // For search token in the inverted index
+        bookmarkId: "string", // For bookmark reference in the inverted index
       },
       primaryIndex: { hashKey: "PK", rangeKey: "SK" },
       globalIndexes: {
@@ -47,10 +48,11 @@ export default $config({
           rangeKey: "entityType",
           // This allows efficient querying of all entities by user and type
         },
-        SearchIndex: {
-          hashKey: "userId",
-          rangeKey: "searchTokens",
-          // This allows efficient searching by tokens for a specific user
+        InvertedIndex: {
+          hashKey: "userId", 
+          rangeKey: "token",
+          // This enables searching with a true inverted index pattern
+          projection: ["bookmarkId"]
         }
       },
       stream: "new-and-old-images" // For real-time updates and triggers

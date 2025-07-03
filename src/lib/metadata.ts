@@ -83,51 +83,65 @@ export async function extractMetadata(url: string): Promise<UrlMetadata> {
 }
 
 /**
- * Generate n-gram tokens for search indexing
- * For "Foobar baz" this creates:
- * - Character n-grams: F, Fo, Foo, Foob, Fooba, Foobar, b, ba, baz
- * - Word n-grams: Foobar, baz, Foobar baz
- * - Cross-word n-grams: r b, ar ba, bar baz, etc.
+ * Generate search tokens for inverted index
+ * 
+ * This function creates a comprehensive set of tokens for the inverted index:
+ * - Whole words for exact matching
+ * - Prefixes for autocomplete
+ * - Character n-grams for partial matching
+ * - Word n-grams for phrase matching
+ * 
+ * Since we're using a true inverted index now, we don't need to worry about 
+ * the 1KB DynamoDB size limit anymore - each token is stored as a separate entry.
  */
 export function generateSearchTokens(text: string): string[] {
   if (!text) return [];
 
   const normalizedText = text.toLowerCase().trim();
   const tokens = new Set<string>();
-
+  
   // Split into words
   const words = normalizedText.split(/\s+/).filter((word) => word.length > 0);
-
-  // Generate character-level n-grams for each word
-  for (const word of words) {
-    // Single characters and progressive n-grams
-    for (let i = 0; i < word.length; i++) {
-      for (let j = i + 1; j <= word.length; j++) {
-        const ngram = word.slice(i, j);
-        if (ngram.length >= 1) {
-          tokens.add(ngram);
+  
+  // Limit to reasonable number of words for processing
+  const limitedWords = words.slice(0, 100);
+  
+  // Add the full original text for exact phrase matching
+  if (normalizedText.length <= 100) {
+    tokens.add(normalizedText);
+  }
+  
+  // Add individual words - most important for search
+  for (const word of limitedWords) {
+    // Skip very short or very long words
+    if (word.length >= 2 && word.length <= 50) {
+      tokens.add(word);
+      
+      // Add prefixes for autocomplete (first 2+ chars)
+      if (word.length >= 5) {
+        for (let i = 2; i <= Math.min(word.length - 1, 6); i++) {
+          tokens.add(word.substring(0, i));
         }
       }
     }
   }
-
-  // Generate word-level n-grams
-  for (let i = 0; i < words.length; i++) {
-    for (let j = i + 1; j <= words.length; j++) {
-      const wordNgram = words.slice(i, j).join(" ");
-      tokens.add(wordNgram);
+  
+  // Add small word n-grams for phrase search
+  for (let i = 0; i < Math.min(limitedWords.length, 25); i++) {
+    for (let j = i + 1; j <= Math.min(i + 3, limitedWords.length); j++) {
+      const wordNgram = limitedWords.slice(i, j).join(" ");
+      if (wordNgram.length <= 50) {
+        tokens.add(wordNgram);
+      }
     }
   }
-
-  // Generate cross-word character n-grams (for phrases)
-  if (words.length > 1) {
-    const fullText = words.join(" ");
-    for (let i = 0; i < fullText.length; i++) {
-      for (let j = i + 1; j <= Math.min(i + 10, fullText.length); j++) {
-        const ngram = fullText.slice(i, j);
-        if (ngram.length >= 2 && !ngram.match(/^\s+$/) && !ngram.match(/\s{2,}/)) {
-          tokens.add(ngram);
-        }
+  
+  // Add domain-specific tokens if the text looks like a domain
+  if (text.includes('.')) {
+    const domainParts = text.split(/[.-]/);
+    for (const part of domainParts) {
+      if (part.length >= 2) {
+        tokens.add(part.toLowerCase());
       }
     }
   }

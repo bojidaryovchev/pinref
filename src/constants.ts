@@ -21,6 +21,7 @@ export const ENTITY_TYPES = {
   BOOKMARK: "BOOKMARK",
   CATEGORY: "CATEGORY",
   TAG: "TAG",
+  SEARCH_INDEX: "SEARCH_INDEX",
 } as const;
 
 /** Default colors for categories */
@@ -96,6 +97,7 @@ export const API_ENDPOINTS = {
   TAG_BY_ID: (id: string) => `/api/tags/${id}`,
   CONTACT: "/api/contact",
   USER_SETTINGS: "/api/user/settings",
+  REBUILD_SEARCH_INDEX: "/api/search-index/rebuild",
 };
 
 /** SWR Configuration */
