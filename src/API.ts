@@ -14,6 +14,39 @@ import { CreateTagInput, Tag } from "./schemas/tag.schema";
 import { UpdateUserSettingsInput } from "./schemas/user-settings.schema";
 import { UserSettings } from "./schemas/user.schema";
 
+/**
+ * Resilient fetch utility that handles URL parsing errors by retrying with absolute URLs
+ */
+async function resilientFetch<T>(url: string, options: RequestInit = {}): Promise<T> {
+  try {
+    // First try with the provided URL
+    const response = await fetch(url, options);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    // If URL parsing fails, retry with absolute URL
+    if (error instanceof TypeError && error.message.includes('Failed to parse URL')) {
+      console.warn(`[resilientFetch] Retrying with absolute URL: ${url}`);
+      const absoluteUrl = getAbsoluteUrl(url);
+      
+      const response = await fetch(absoluteUrl, options);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
+      return await response.json();
+    }
+    
+    // Re-throw other errors
+    throw error;
+  }
+}
+
 // SERVER ACTIONS WITH TAG-BASED CACHE INVALIDATION
 
 /**
@@ -93,81 +126,65 @@ export const getBookmarks = async (
   if (options.isFavorite) params.append("favorite", "true");
   if (options.query) params.append("q", options.query);
 
-  const url = getAbsoluteUrl(`${API_ENDPOINTS.BOOKMARKS}?${params.toString()}`);
-  const response = await fetch(url, {
+  const url = `${API_ENDPOINTS.BOOKMARKS}?${params.toString()}`;
+  return resilientFetch<{
+    bookmarks: Bookmark[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  }>(url, {
     credentials: "include", // Include credentials for authentication
     next: { tags: [CACHE_TAGS.BOOKMARKS] }, // Add tag for cache invalidation
   });
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch bookmarks");
-  }
-
-  return response.json();
 };
 
 // Get a single bookmark by ID
 export const getBookmark = async (id: string): Promise<Bookmark> => {
-  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.BOOKMARK_BY_ID(id)), {
+  return resilientFetch<Bookmark>(API_ENDPOINTS.BOOKMARK_BY_ID(id), {
     credentials: "include", // Include credentials for authentication
     next: { tags: [CACHE_TAGS.BOOKMARKS] },
   });
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch bookmark");
-  }
-
-  return response.json();
 };
 
 // Create a new bookmark
 export const createBookmark = async (data: CreateBookmarkInput): Promise<Bookmark> => {
-  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.BOOKMARKS), {
+  const result = await resilientFetch<Bookmark>(API_ENDPOINTS.BOOKMARKS, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
     credentials: "include", // Include credentials for authentication
   });
 
-  if (!response.ok) {
-    throw new Error("Failed to create bookmark");
-  }
-
   // Invalidate bookmarks cache after creating a new bookmark
   invalidateBookmarksCache();
 
-  return response.json();
+  return result;
 };
 
 // Update an existing bookmark
 export const updateBookmark = async (id: string, data: Partial<CreateBookmarkInput>): Promise<Bookmark> => {
-  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.BOOKMARK_BY_ID(id)), {
+  const result = await resilientFetch<Bookmark>(API_ENDPOINTS.BOOKMARK_BY_ID(id), {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
     credentials: "include", // Include credentials for authentication
   });
 
-  if (!response.ok) {
-    throw new Error("Failed to update bookmark");
-  }
-
   // Invalidate bookmarks cache after updating a bookmark
   invalidateBookmarksCache();
 
-  return response.json();
+  return result;
 };
 
 // Delete a bookmark
 export const deleteBookmark = async (id: string): Promise<void> => {
-  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.BOOKMARK_BY_ID(id)), {
+  await resilientFetch<void>(API_ENDPOINTS.BOOKMARK_BY_ID(id), {
     method: "DELETE",
     credentials: "include", // Include credentials for authentication
   });
-
-  if (!response.ok) {
-    throw new Error("Failed to delete bookmark");
-  }
 
   // Invalidate bookmarks cache after deleting a bookmark
   invalidateBookmarksCache();
@@ -175,21 +192,17 @@ export const deleteBookmark = async (id: string): Promise<void> => {
 
 // Toggle bookmark favorite status
 export const toggleBookmarkFavorite = async (id: string, isFavorite: boolean): Promise<Bookmark> => {
-  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.BOOKMARK_BY_ID(id)), {
+  const result = await resilientFetch<Bookmark>(API_ENDPOINTS.BOOKMARK_BY_ID(id), {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ isFavorite }),
     credentials: "include", // Include credentials for authentication
   });
 
-  if (!response.ok) {
-    throw new Error("Failed to update favorite status");
-  }
-
   // Invalidate bookmarks cache after updating favorite status
   invalidateBookmarksCache();
 
-  return response.json();
+  return result;
 };
 
 /**
@@ -198,84 +211,60 @@ export const toggleBookmarkFavorite = async (id: string, isFavorite: boolean): P
 
 // Get all categories
 export const getCategories = async (): Promise<Category[]> => {
-  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.CATEGORIES), {
+  return resilientFetch<Category[]>(API_ENDPOINTS.CATEGORIES, {
     credentials: "include", // Include credentials for authentication
     next: { tags: [CACHE_TAGS.CATEGORIES] },
   });
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch categories");
-  }
-
-  return response.json();
 };
 
 // Get a single category
 export const getCategory = async (id: string): Promise<Category> => {
-  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.CATEGORY_BY_ID(id)), {
+  return resilientFetch<Category>(API_ENDPOINTS.CATEGORY_BY_ID(id), {
     credentials: "include", // Include credentials for authentication
     next: { tags: [CACHE_TAGS.CATEGORIES] },
   });
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch category");
-  }
-
-  return response.json();
 };
 
 // Create a new category
 export const createCategory = async (data: CreateCategoryInput): Promise<Category> => {
-  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.CATEGORIES), {
+  const result = await resilientFetch<Category>(API_ENDPOINTS.CATEGORIES, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
     credentials: "include", // Include credentials for authentication
   });
 
-  if (!response.ok) {
-    throw new Error("Failed to create category");
-  }
-
   // Invalidate categories cache after creating a new category
   invalidateCategoriesCache();
   // May affect bookmarks display that use categories
   invalidateBookmarksCache();
 
-  return response.json();
+  return result;
 };
 
 // Update an existing category
 export const updateCategory = async (id: string, data: Partial<CreateCategoryInput>): Promise<Category> => {
-  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.CATEGORY_BY_ID(id)), {
+  const result = await resilientFetch<Category>(API_ENDPOINTS.CATEGORY_BY_ID(id), {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
     credentials: "include", // Include credentials for authentication
   });
 
-  if (!response.ok) {
-    throw new Error("Failed to update category");
-  }
-
   // Invalidate categories cache after updating a category
   invalidateCategoriesCache();
   // May affect bookmarks display that use this category
   invalidateBookmarksCache();
 
-  return response.json();
+  return result;
 };
 
 // Delete a category
 export const deleteCategory = async (id: string): Promise<void> => {
-  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.CATEGORY_BY_ID(id)), {
+  await resilientFetch<void>(API_ENDPOINTS.CATEGORY_BY_ID(id), {
     method: "DELETE",
     credentials: "include", // Include credentials for authentication
   });
-
-  if (!response.ok) {
-    throw new Error("Failed to delete category");
-  }
 
   // Invalidate categories cache after deleting a category
   invalidateCategoriesCache();
@@ -289,84 +278,60 @@ export const deleteCategory = async (id: string): Promise<void> => {
 
 // Get all tags
 export const getTags = async (): Promise<Tag[]> => {
-  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.TAGS), {
+  return resilientFetch<Tag[]>(API_ENDPOINTS.TAGS, {
     credentials: "include", // Include credentials for authentication
     next: { tags: [CACHE_TAGS.TAGS] },
   });
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch tags");
-  }
-
-  return response.json();
 };
 
 // Get a single tag
 export const getTag = async (id: string): Promise<Tag> => {
-  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.TAG_BY_ID(id)), {
+  return resilientFetch<Tag>(API_ENDPOINTS.TAG_BY_ID(id), {
     credentials: "include", // Include credentials for authentication
     next: { tags: [CACHE_TAGS.TAGS] },
   });
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch tag");
-  }
-
-  return response.json();
 };
 
 // Create a new tag
 export const createTag = async (data: CreateTagInput): Promise<Tag> => {
-  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.TAGS), {
+  const result = await resilientFetch<Tag>(API_ENDPOINTS.TAGS, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
     credentials: "include", // Include credentials for authentication
   });
 
-  if (!response.ok) {
-    throw new Error("Failed to create tag");
-  }
-
   // Invalidate tags cache after creating a new tag
   invalidateTagsCache();
   // May affect bookmarks display that use tags
   invalidateBookmarksCache();
 
-  return response.json();
+  return result;
 };
 
 // Update an existing tag
 export const updateTag = async (id: string, data: Partial<CreateTagInput>): Promise<Tag> => {
-  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.TAG_BY_ID(id)), {
+  const result = await resilientFetch<Tag>(API_ENDPOINTS.TAG_BY_ID(id), {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
     credentials: "include", // Include credentials for authentication
   });
 
-  if (!response.ok) {
-    throw new Error("Failed to update tag");
-  }
-
   // Invalidate tags cache after updating a tag
   invalidateTagsCache();
   // May affect bookmarks display that use this tag
   invalidateBookmarksCache();
 
-  return response.json();
+  return result;
 };
 
 // Delete a tag
 export const deleteTag = async (id: string): Promise<void> => {
-  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.TAG_BY_ID(id)), {
+  await resilientFetch<void>(API_ENDPOINTS.TAG_BY_ID(id), {
     method: "DELETE",
     credentials: "include", // Include credentials for authentication
   });
-
-  if (!response.ok) {
-    throw new Error("Failed to delete tag");
-  }
 
   // Invalidate tags cache after deleting a tag
   invalidateTagsCache();
@@ -380,35 +345,25 @@ export const deleteTag = async (id: string): Promise<void> => {
 
 // Get user settings
 export const getUserSettings = async (): Promise<UserSettings> => {
-  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.USER_SETTINGS), {
+  return resilientFetch<UserSettings>(API_ENDPOINTS.USER_SETTINGS, {
     credentials: "include", // Include credentials for authentication
     next: { tags: [CACHE_TAGS.USER_SETTINGS] },
   });
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch user settings");
-  }
-
-  return response.json();
 };
 
 // Update user settings
 export const updateUserSettings = async (data: UpdateUserSettingsInput): Promise<UserSettings> => {
-  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.USER_SETTINGS), {
+  const result = await resilientFetch<UserSettings>(API_ENDPOINTS.USER_SETTINGS, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
     credentials: "include", // Include credentials for authentication
   });
 
-  if (!response.ok) {
-    throw new Error("Failed to update user settings");
-  }
-
   // Invalidate user settings cache after updating
   invalidateUserSettingsCache();
 
-  return response.json();
+  return result;
 };
 
 /**
@@ -417,23 +372,32 @@ export const updateUserSettings = async (data: UpdateUserSettingsInput): Promise
 
 // Rebuild the search index for the authenticated user
 export const rebuildSearchIndex = async (): Promise<{ success: boolean; count: number; message: string }> => {
-  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.REBUILD_SEARCH_INDEX), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || "Failed to rebuild search index");
+  try {
+    const result = await resilientFetch<{ success: boolean; count: number; message: string }>(API_ENDPOINTS.REBUILD_SEARCH_INDEX, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+    
+    // Invalidate bookmarks cache after rebuilding the search index
+    invalidateBookmarksCache();
+    // Invalidate search index cache
+    invalidateSearchIndexCache();
+    
+    return result;
+  } catch (error) {
+    // Special handling for the search index errors to provide better error messages
+    if (error instanceof Error) {
+      try {
+        const errorMessage = error.message;
+        const errorObj = JSON.parse(errorMessage);
+        throw new Error(errorObj.error || "Failed to rebuild search index");
+      } catch {
+        throw error;
+      }
+    }
+    throw error;
   }
-
-  // Invalidate bookmarks cache after rebuilding the search index
-  invalidateBookmarksCache();
-  // Invalidate search index cache
-  invalidateSearchIndexCache();
-
-  return await response.json();
 };

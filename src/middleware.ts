@@ -6,8 +6,13 @@ export async function middleware(req: NextRequest) {
   // Get the pathname
   const path = req.nextUrl.pathname;
 
+  // Debug URLs (remove in production)
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[Middleware] Request URL: ${req.url}, Path: ${path}`);
+  }
+
   // Public paths that don't require authentication
-  const publicPaths = ["/api/auth", "/auth"];
+  const publicPaths = ["/api/auth", "/auth", "/api/debug-url"];
 
   // Check if the path is public
   const isPublicPath = publicPaths.some((publicPath) => path.startsWith(publicPath));
