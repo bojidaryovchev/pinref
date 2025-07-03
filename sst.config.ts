@@ -34,7 +34,6 @@ export default $config({
         entityType: "string", // For filtering: USER, BOOKMARK, CATEGORY, TAG
         userId: "string", // For user data isolation
         token: "string", // For search token in the inverted index
-        bookmarkId: "string", // For bookmark reference in the inverted index
       },
       primaryIndex: { hashKey: "PK", rangeKey: "SK" },
       globalIndexes: {
@@ -52,7 +51,6 @@ export default $config({
           hashKey: "userId",
           rangeKey: "token",
           // This enables searching with a true inverted index pattern
-          // We need to project all attributes needed for the index
           projection: "all",
         },
       },
