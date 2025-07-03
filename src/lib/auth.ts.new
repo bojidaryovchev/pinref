@@ -6,19 +6,12 @@ import NextAuth from "next-auth";
 import { dynamoAuthDocClient } from "./db-client";
 
 export const authOptions: NextAuthOptions = {
+  ...authConfig,
   adapter: DynamoDBAdapter(dynamoAuthDocClient, {
     tableName: TABLE_NAME,
     partitionKey: "PK",
     sortKey: "SK",
   }),
-  providers: authConfig.providers,
-  pages: authConfig.pages,
-  callbacks: authConfig.callbacks,
-  secret: process.env.NEXTAUTH_SECRET,
-  session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
   debug: process.env.NODE_ENV !== "production",
   events: {
     signIn: ({ user }) => {
@@ -27,6 +20,5 @@ export const authOptions: NextAuthOptions = {
   },
 };
 
-// Export NextAuth v4 handler
-const auth = NextAuth(authOptions);
-export default auth;
+// Export NextAuth v4 helpers (not v5 yet)
+export default NextAuth(authOptions);

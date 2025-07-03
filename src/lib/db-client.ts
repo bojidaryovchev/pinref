@@ -10,14 +10,8 @@ import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
 // Create the DynamoDB client for the AWS SDK v3
 export const dynamoClient = new DynamoDBClient({
   region: process.env.AWS_REGION, // Required
-  ...(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
-    ? {
-        credentials: {
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-        },
-      }
-    : {}),
+  // In Lambda environment, use the default credentials provider chain
+  // which will automatically use the Lambda execution role
   ...(process.env.DYNAMODB_ENDPOINT
     ? {
         endpoint: process.env.DYNAMODB_ENDPOINT,
@@ -31,14 +25,8 @@ export const dynamoDocClient = DynamoDBDocument.from(dynamoClient);
 // Create the DynamoDB client for NextAuth (using v2 compatibility)
 export const dynamoAuthClient = new DynamoDB({
   region: process.env.AWS_REGION, // Required
-  ...(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
-    ? {
-        credentials: {
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-        },
-      }
-    : {}),
+  // In Lambda environment, use the default credentials provider chain
+  // which will automatically use the Lambda execution role
   ...(process.env.DYNAMODB_ENDPOINT
     ? {
         endpoint: process.env.DYNAMODB_ENDPOINT,

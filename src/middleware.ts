@@ -18,19 +18,47 @@ export async function middleware(req: NextRequest) {
   if (isPublicPath) {
     return NextResponse.next();
   }
+  
+  try {
+    // Get the token
+    const token = await getToken({ 
+      req, 
+      secret: process.env.NEXTAUTH_SECRET 
+    });
 
-  // Get the token
-  const token = await getToken({ 
-    req, 
-    secret: process.env.NEXTAUTH_SECRET 
-  });
+    // If user is not authenticated and trying to access protected route, redirect to sign-in
+    if (!token && !path.startsWith("/api/auth")) {
+      // For API routes, return 401 instead of redirecting
+      if (path.startsWith("/api/")) {
+        return new NextResponse(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json"
+          }
+        });
+      }
+      
+      // Include the current path as returnUrl for post-login redirect
+      const returnUrl = encodeURIComponent(path);
+      return NextResponse.redirect(new URL(`/auth?returnUrl=${returnUrl}`, req.url));
+    }
 
-  // If user is not authenticated and trying to access protected route, redirect to our custom auth page
-  if (!token && !path.startsWith("/api/auth")) {
-    return NextResponse.redirect(new URL("/auth", req.url));
+    return NextResponse.next();
+  } catch (error) {
+    console.error("Authentication error in middleware:", error);
+    
+    // If authentication fails due to an error, redirect to the auth page
+    if (path.startsWith("/api/")) {
+      return new NextResponse(JSON.stringify({ error: "Authentication error" }), {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+    }
+    
+    return NextResponse.redirect(new URL("/auth?error=auth_error", req.url));
   }
-
-  return NextResponse.next();
 }
 
 // Configure which paths the middleware runs on

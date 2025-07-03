@@ -50,7 +50,9 @@ export const getBookmarks = async (options: BookmarkQueryOptions): Promise<{
   if (options.query) params.append('q', options.query);
   
   const url = `${API_ENDPOINTS.BOOKMARKS}?${params.toString()}`;
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    credentials: 'include', // Include credentials for authentication
+  });
   
   if (!response.ok) {
     throw new Error('Failed to fetch bookmarks');
@@ -61,7 +63,9 @@ export const getBookmarks = async (options: BookmarkQueryOptions): Promise<{
 
 // Get a single bookmark by ID
 export const getBookmark = async (id: string): Promise<Bookmark> => {
-  const response = await fetch(API_ENDPOINTS.BOOKMARK_BY_ID(id));
+  const response = await fetch(API_ENDPOINTS.BOOKMARK_BY_ID(id), {
+    credentials: 'include', // Include credentials for authentication
+  });
   
   if (!response.ok) {
     throw new Error('Failed to fetch bookmark');
@@ -76,6 +80,7 @@ export const createBookmark = async (data: CreateBookmarkInput): Promise<Bookmar
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
+    credentials: 'include', // Include credentials for authentication
   });
   
   if (!response.ok) {
@@ -91,6 +96,7 @@ export const updateBookmark = async (id: string, data: Partial<CreateBookmarkInp
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
+    credentials: 'include', // Include credentials for authentication
   });
   
   if (!response.ok) {
@@ -104,6 +110,7 @@ export const updateBookmark = async (id: string, data: Partial<CreateBookmarkInp
 export const deleteBookmark = async (id: string): Promise<void> => {
   const response = await fetch(API_ENDPOINTS.BOOKMARK_BY_ID(id), {
     method: 'DELETE',
+    credentials: 'include', // Include credentials for authentication
   });
   
   if (!response.ok) {
@@ -117,6 +124,7 @@ export const toggleBookmarkFavorite = async (id: string, isFavorite: boolean): P
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ isFavorite }),
+    credentials: 'include', // Include credentials for authentication
   });
   
   if (!response.ok) {
@@ -132,7 +140,9 @@ export const toggleBookmarkFavorite = async (id: string, isFavorite: boolean): P
 
 // Get all categories
 export const getCategories = async (): Promise<Category[]> => {
-  const response = await fetch(API_ENDPOINTS.CATEGORIES);
+  const response = await fetch(API_ENDPOINTS.CATEGORIES, {
+    credentials: 'include', // Include credentials for authentication
+  });
   
   if (!response.ok) {
     throw new Error('Failed to fetch categories');
@@ -143,7 +153,9 @@ export const getCategories = async (): Promise<Category[]> => {
 
 // Get a single category
 export const getCategory = async (id: string): Promise<Category> => {
-  const response = await fetch(API_ENDPOINTS.CATEGORY_BY_ID(id));
+  const response = await fetch(API_ENDPOINTS.CATEGORY_BY_ID(id), {
+    credentials: 'include', // Include credentials for authentication
+  });
   
   if (!response.ok) {
     throw new Error('Failed to fetch category');
@@ -158,6 +170,7 @@ export const createCategory = async (data: CreateCategoryInput): Promise<Categor
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
+    credentials: 'include', // Include credentials for authentication
   });
   
   if (!response.ok) {
@@ -173,6 +186,7 @@ export const updateCategory = async (id: string, data: Partial<CreateCategoryInp
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
+    credentials: 'include', // Include credentials for authentication
   });
   
   if (!response.ok) {
@@ -186,6 +200,7 @@ export const updateCategory = async (id: string, data: Partial<CreateCategoryInp
 export const deleteCategory = async (id: string): Promise<void> => {
   const response = await fetch(API_ENDPOINTS.CATEGORY_BY_ID(id), {
     method: 'DELETE',
+    credentials: 'include', // Include credentials for authentication
   });
   
   if (!response.ok) {
@@ -199,7 +214,9 @@ export const deleteCategory = async (id: string): Promise<void> => {
 
 // Get all tags
 export const getTags = async (): Promise<Tag[]> => {
-  const response = await fetch(API_ENDPOINTS.TAGS);
+  const response = await fetch(API_ENDPOINTS.TAGS, {
+    credentials: 'include', // Include credentials for authentication
+  });
   
   if (!response.ok) {
     throw new Error('Failed to fetch tags');
@@ -210,7 +227,9 @@ export const getTags = async (): Promise<Tag[]> => {
 
 // Get a single tag
 export const getTag = async (id: string): Promise<Tag> => {
-  const response = await fetch(API_ENDPOINTS.TAG_BY_ID(id));
+  const response = await fetch(API_ENDPOINTS.TAG_BY_ID(id), {
+    credentials: 'include', // Include credentials for authentication
+  });
   
   if (!response.ok) {
     throw new Error('Failed to fetch tag');
@@ -225,6 +244,7 @@ export const createTag = async (data: CreateTagInput): Promise<Tag> => {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
+    credentials: 'include', // Include credentials for authentication
   });
   
   if (!response.ok) {
@@ -240,6 +260,7 @@ export const updateTag = async (id: string, data: Partial<CreateTagInput>): Prom
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
+    credentials: 'include', // Include credentials for authentication
   });
   
   if (!response.ok) {
@@ -253,6 +274,7 @@ export const updateTag = async (id: string, data: Partial<CreateTagInput>): Prom
 export const deleteTag = async (id: string): Promise<void> => {
   const response = await fetch(API_ENDPOINTS.TAG_BY_ID(id), {
     method: 'DELETE',
+    credentials: 'include', // Include credentials for authentication
   });
   
   if (!response.ok) {
@@ -266,7 +288,9 @@ export const deleteTag = async (id: string): Promise<void> => {
 
 // Get user settings
 export const getUserSettings = async (): Promise<UserSettings> => {
-  const response = await fetch(API_ENDPOINTS.USER_SETTINGS);
+  const response = await fetch(API_ENDPOINTS.USER_SETTINGS, {
+    credentials: 'include', // Include credentials for authentication
+  });
   
   if (!response.ok) {
     throw new Error('Failed to fetch user settings');
@@ -281,6 +305,7 @@ export const updateUserSettings = async (data: UpdateUserSettingsInput): Promise
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
+    credentials: 'include', // Include credentials for authentication
   });
   
   if (!response.ok) {

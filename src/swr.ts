@@ -9,10 +9,20 @@
  * @throws Error with message from API if response is not ok
  */
 export const fetcher = async <T>(url: string): Promise<T> => {
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    credentials: 'include' // Always include credentials for API requests
+  });
   
   // If the status code is not ok, handle the error
   if (!response.ok) {
+    // For authentication errors, redirect to the login page
+    if (response.status === 401 || response.status === 403) {
+      // Add current URL as redirect param so user can return to the same page
+      const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = `/auth?returnUrl=${returnUrl}`;
+      throw new Error('Authentication required');
+    }
+    
     const errorData = await response.json().catch(() => ({}));
     const errorMessage = errorData.error || response.statusText || 'An error occurred';
     throw new Error(errorMessage);
