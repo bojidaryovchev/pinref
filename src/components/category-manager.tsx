@@ -11,14 +11,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ERROR_MESSAGES, PLACEHOLDERS, PRESET_COLORS, PRESET_ICONS, TOAST_MESSAGES } from "@/constants";
+import { useCategories } from "@/hooks/use-api";
 import type { Category } from "@/schemas/category.schema";
-import { PRESET_COLORS, PRESET_ICONS, ERROR_MESSAGES, TOAST_MESSAGES, PLACEHOLDERS } from "@/constants";
+import { createCategorySchema } from "@/schemas/category.schema";
 import { Edit, Palette, Plus, Trash2 } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { useCategories } from "@/hooks/use-api";
-import { createCategorySchema } from "@/schemas/category.schema";
 
 const CategoryManager: React.FC = () => {
   const {
@@ -186,7 +186,8 @@ const CategoryManager: React.FC = () => {
           Cancel
         </Button>
         <Button onClick={editingCategory ? handleUpdate : handleCreate} disabled={isSubmitting}>
-          {isSubmitting ? (editingCategory ? "Updating..." : "Creating...") : (editingCategory ? "Update" : "Create")} Category
+          {isSubmitting ? (editingCategory ? "Updating..." : "Creating...") : editingCategory ? "Update" : "Create"}{" "}
+          Category
         </Button>
       </div>
     </div>
@@ -216,55 +217,53 @@ const CategoryManager: React.FC = () => {
       </div>
 
       <div className="space-y-2">
-        {isLoading && (
-          <div className="text-muted-foreground py-8 text-center">Loading categories...</div>
-        )}
-        {error && (
-          <div className="text-destructive py-8 text-center">Failed to load categories</div>
-        )}
-        {!isLoading && !error && categories.map((category) => (
-          <div key={category.id} className="flex items-center justify-between rounded-lg border p-3">
-            <div className="flex items-center gap-3">
-              <div
-                className="flex h-8 w-8 items-center justify-center rounded font-medium text-white"
-                style={{ backgroundColor: category.color }}
-              >
-                {category.icon}
+        {isLoading && <div className="text-muted-foreground py-8 text-center">Loading categories...</div>}
+        {error && <div className="text-destructive py-8 text-center">Failed to load categories</div>}
+        {!isLoading &&
+          !error &&
+          categories.map((category) => (
+            <div key={category.id} className="flex items-center justify-between rounded-lg border p-3">
+              <div className="flex items-center gap-3">
+                <div
+                  className="flex h-8 w-8 items-center justify-center rounded font-medium text-white"
+                  style={{ backgroundColor: category.color }}
+                >
+                  {category.icon}
+                </div>
+                <div>
+                  <p className="font-medium">{category.name}</p>
+                  <p className="text-muted-foreground text-sm">{category._count?.bookmarks ?? 0} bookmarks</p>
+                </div>
               </div>
-              <div>
-                <p className="font-medium">{category.name}</p>
-                <p className="text-muted-foreground text-sm">{category._count?.bookmarks ?? 0} bookmarks</p>
+              <div className="flex items-center gap-2">
+                <Dialog
+                  open={editingCategory?.id === category.id}
+                  onOpenChange={(open) => !open && setEditingCategory(null)}
+                >
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="sm" onClick={() => handleEdit(category)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Edit Category</DialogTitle>
+                      <DialogDescription>Update the category name, icon, or color.</DialogDescription>
+                    </DialogHeader>
+                    <CategoryForm />
+                  </DialogContent>
+                </Dialog>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDelete(category.id)}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Dialog
-                open={editingCategory?.id === category.id}
-                onOpenChange={(open) => !open && setEditingCategory(null)}
-              >
-                <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm" onClick={() => handleEdit(category)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Edit Category</DialogTitle>
-                    <DialogDescription>Update the category name, icon, or color.</DialogDescription>
-                  </DialogHeader>
-                  <CategoryForm />
-                </DialogContent>
-              </Dialog>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDelete(category.id)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        ))}
+          ))}
       </div>
 
       {categories.length === 0 && (

@@ -186,7 +186,7 @@ const Sidebar: React.FC<Props> = ({
             )}
           </div>
         )} */}
-        
+
         {!collapsed && (
           <div className="flex gap-1">
             <SettingsDialog />

@@ -13,12 +13,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PLACEHOLDERS, PRESET_TAG_ICONS, TOAST_MESSAGES } from "@/constants";
 
+import { useTags } from "@/hooks/use-api";
+import { createTagSchema, Tag } from "@/schemas/tag.schema";
 import { Edit, Hash, Plus, Tag as TagIcon, Trash2 } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { useTags } from "@/hooks/use-api";
-import { createTagSchema, Tag } from "@/schemas/tag.schema";
-
 
 const TagManager: React.FC = () => {
   const { tags, isLoading, error, addTag, updateTag, removeTag } = useTags();
@@ -30,7 +29,6 @@ const TagManager: React.FC = () => {
   });
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
 
   const handleCreate = async () => {
     setFormError(null);
@@ -53,7 +51,6 @@ const TagManager: React.FC = () => {
     }
   };
 
-
   const handleEdit = (tag: Tag) => {
     setEditingTag(tag);
     setFormData({
@@ -62,7 +59,6 @@ const TagManager: React.FC = () => {
     });
     setFormError(null);
   };
-
 
   const handleUpdate = async () => {
     setFormError(null);
@@ -85,7 +81,6 @@ const TagManager: React.FC = () => {
       setIsSubmitting(false);
     }
   };
-
 
   const handleDelete = async (tagId: string) => {
     setIsSubmitting(true);
@@ -191,57 +186,55 @@ const TagManager: React.FC = () => {
         </Dialog>
       </div>
 
-      {isLoading && (
-        <div className="text-muted-foreground py-8 text-center">Loading tags...</div>
-      )}
-      {error && (
-        <div className="text-destructive py-8 text-center">Failed to load tags</div>
-      )}
+      {isLoading && <div className="text-muted-foreground py-8 text-center">Loading tags...</div>}
+      {error && <div className="text-destructive py-8 text-center">Failed to load tags</div>}
 
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-        {tags && tags.length > 0 && tags.map((tag: Tag) => (
-          <div key={tag.id} className="flex items-center justify-between rounded-lg border p-3">
-            <div className="flex items-center gap-2">
-              {tag.icon ? (
-                <span className="text-lg">{tag.icon}</span>
-              ) : (
-                <Hash className="text-muted-foreground h-4 w-4" />
-              )}
-              <div>
-                <p className="font-medium">{tag.name}</p>
-                <p className="text-muted-foreground text-sm">{tag._count?.bookmarks ?? 0} bookmarks</p>
+        {tags &&
+          tags.length > 0 &&
+          tags.map((tag: Tag) => (
+            <div key={tag.id} className="flex items-center justify-between rounded-lg border p-3">
+              <div className="flex items-center gap-2">
+                {tag.icon ? (
+                  <span className="text-lg">{tag.icon}</span>
+                ) : (
+                  <Hash className="text-muted-foreground h-4 w-4" />
+                )}
+                <div>
+                  <p className="font-medium">{tag.name}</p>
+                  <p className="text-muted-foreground text-sm">{tag._count?.bookmarks ?? 0} bookmarks</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <Dialog open={editingTag?.id === tag.id} onOpenChange={(open) => !open && setEditingTag(null)}>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="sm" onClick={() => handleEdit(tag)}>
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Edit Tag</DialogTitle>
+                      <DialogDescription>Update the tag name or icon.</DialogDescription>
+                    </DialogHeader>
+                    <TagForm />
+                  </DialogContent>
+                </Dialog>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDelete(tag.id)}
+                  className="text-destructive hover:text-destructive"
+                  disabled={isSubmitting}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
               </div>
             </div>
-            <div className="flex items-center gap-1">
-              <Dialog open={editingTag?.id === tag.id} onOpenChange={(open) => !open && setEditingTag(null)}>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm" onClick={() => handleEdit(tag)}>
-                    <Edit className="h-3 w-3" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Edit Tag</DialogTitle>
-                    <DialogDescription>Update the tag name or icon.</DialogDescription>
-                  </DialogHeader>
-                  <TagForm />
-                </DialogContent>
-              </Dialog>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDelete(tag.id)}
-                className="text-destructive hover:text-destructive"
-                disabled={isSubmitting}
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            </div>
-          </div>
-        ))}
+          ))}
       </div>
 
-      {(!isLoading && (!tags || tags.length === 0)) && (
+      {!isLoading && (!tags || tags.length === 0) && (
         <div className="text-muted-foreground py-8 text-center">
           <TagIcon className="mx-auto mb-4 h-12 w-12 opacity-50" />
           <p>No tags yet. Create your first tag to get started!</p>

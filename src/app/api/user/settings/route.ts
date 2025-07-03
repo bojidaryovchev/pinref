@@ -18,7 +18,7 @@ export async function GET() {
 
     // Get the user settings
     const settings = await getUserSettings(session.user.email);
-    
+
     // If settings don't exist, return defaults
     if (!settings) {
       return NextResponse.json({
@@ -51,15 +51,18 @@ export async function PUT(request: NextRequest) {
 
     // Update the settings
     const updatedSettings = await updateUserSettings(session.user.email, updateData);
-    
+
     return NextResponse.json(updatedSettings);
   } catch (error) {
     console.error("Error updating user settings:", error);
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ 
-        error: "Invalid request data", 
-        details: error.errors 
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: "Invalid request data",
+          details: error.errors,
+        },
+        { status: 400 },
+      );
     }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

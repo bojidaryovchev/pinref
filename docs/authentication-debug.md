@@ -33,6 +33,7 @@ export const dynamoClient = new DynamoDBClient({
 ### 2. Enhanced NextAuth Configuration
 
 Updated the NextAuth configuration to:
+
 - Add debugging when not in production
 - Explicitly specify the partition key and sort key for the DynamoDB adapter
 - Add event handlers for better logging
@@ -79,6 +80,7 @@ permissions: [
 ### 4. Authentication Debugging Endpoint
 
 Created an authentication debugging endpoint at `/api/auth-debug` that provides information about:
+
 - Authentication status
 - Session information
 - Environment configuration

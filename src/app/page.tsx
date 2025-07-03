@@ -1,6 +1,5 @@
 "use client";
 
-
 import AddBookmarkDialog from "@/components/add-bookmark-dialog";
 import BookmarkCard from "@/components/bookmark-card";
 import SearchBar from "@/components/search-bar";
@@ -11,10 +10,7 @@ import { useState } from "react";
 // import toast from "react-hot-toast";
 import { useBookmarks, useCategories, useTags } from "@/hooks/use-api";
 
-
-
 const Home: React.FC = () => {
-
   const { status } = useSession();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>();
@@ -39,7 +35,7 @@ const Home: React.FC = () => {
   const { categories, isLoading: categoriesLoading } = useCategories();
   const { tags, isLoading: tagsLoading } = useTags();
 
-  const loading = bookmarksLoading || categoriesLoading || tagsLoading || (status === "loading");
+  const loading = bookmarksLoading || categoriesLoading || tagsLoading || status === "loading";
 
   const handleCategorySelect = (categoryId?: string) => {
     setSelectedCategory(categoryId);
@@ -64,7 +60,6 @@ const Home: React.FC = () => {
     setSelectedTag(undefined);
     setShowFavorites(false);
   };
-
 
   // Check authentication status
   if (status === "unauthenticated") {
@@ -92,8 +87,8 @@ const Home: React.FC = () => {
   return (
     <div className="bg-background flex h-screen">
       <Sidebar
-        categories={categories.map(c => ({ ...c, _count: c._count || { bookmarks: 0 } }))}
-        tags={tags.map(t => ({ ...t, _count: t._count || { bookmarks: 0 } }))}
+        categories={categories.map((c) => ({ ...c, _count: c._count || { bookmarks: 0 } }))}
+        tags={tags.map((t) => ({ ...t, _count: t._count || { bookmarks: 0 } }))}
         selectedCategory={selectedCategory}
         selectedTag={selectedTag}
         showFavorites={showFavorites}
@@ -131,8 +126,8 @@ const Home: React.FC = () => {
                 <BookmarkCard
                   key={bookmark.id}
                   bookmark={bookmark}
-                  categories={categories?.map(c => ({ id: c.id, name: c.name, icon: c.icon }))}
-                  tags={tags?.map(t => ({ id: t.id, name: t.name, icon: t.icon }))}
+                  categories={categories?.map((c) => ({ id: c.id, name: c.name, icon: c.icon }))}
+                  tags={tags?.map((t) => ({ id: t.id, name: t.name, icon: t.icon }))}
                 />
               ))}
             </div>

@@ -7,7 +7,7 @@ This directory contains comprehensive documentation for Pinref, a modern visual 
 ### 📚 Understanding Pinref
 
 1. **[Project Overview](./project-overview.md)** - Vision, features, and business model
-2. **[Business Logic](./business-logic.md)** - Core features and domain entities  
+2. **[Business Logic](./business-logic.md)** - Core features and domain entities
 3. **[Technical Architecture](./technical-architecture.md)** - System design and infrastructure
 4. **[Search Implementation](./search-implementation.md)** - N-gram search algorithm details
 
@@ -27,17 +27,20 @@ This directory contains comprehensive documentation for Pinref, a modern visual 
 This documentation provides comprehensive coverage of Pinref's architecture, business logic, and implementation details:
 
 ### Business & Product
+
 - **Project Vision**: Understanding Pinref's goals and target users
 - **Feature Set**: Detailed breakdown of bookmark management capabilities
 - **Business Model**: Potential monetization and scaling strategies
 
 ### Technical Implementation
+
 - **System Architecture**: Serverless AWS infrastructure design
 - **Data Model**: DynamoDB single-table design and entity relationships
 - **Search Engine**: Advanced n-gram based fuzzy search implementation
 - **Security**: Data encryption and user privacy measures
 
 ### Development & Deployment
+
 - **Local Setup**: Development environment configuration
 - **AWS Infrastructure**: Serverless deployment with SST
 - **Performance**: Optimization strategies and monitoring

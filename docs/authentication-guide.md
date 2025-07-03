@@ -73,7 +73,7 @@ The authentication system is configured with:
 
 - JWT sessions (30 day expiry)
 - Google OAuth provider
-- Custom sign-in page at `/auth` 
+- Custom sign-in page at `/auth`
 - Route protection via middleware
 - SWR authentication error handling with automatic redirects
 - Return URL preservation for seamless post-login navigation
@@ -96,6 +96,7 @@ For development, `NEXTAUTH_URL` is optional. For production, it must be set to y
 All API functions in `src/API.ts` include `credentials: 'include'` in fetch options to ensure authentication cookies are sent with each request. The SWR fetcher in `src/swr.ts` similarly includes credentials in all requests.
 
 When authentication fails:
+
 - API routes return 401/403 status codes
 - SWR fetcher detects these errors and redirects to the auth page
 - The current URL is preserved as a returnUrl parameter for post-login redirection

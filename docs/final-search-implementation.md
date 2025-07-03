@@ -9,12 +9,14 @@ We have successfully refactored the bookmark search system to use a true inverte
 ### 1. True Inverted Index Architecture
 
 **Previous Implementation:**
+
 - Stored all search tokens in a single `searchTokens` attribute per bookmark
 - Limited by DynamoDB's 1KB key size limit (GSI index key)
 - Required truncating tokens, reducing search quality
 - Inefficient client-side filtering of results
 
 **New Implementation:**
+
 - One database entry per token-document pair (`token` → `bookmarkId`)
 - No size limitations for tokens or index entries
 - Efficient server-side filtering via the inverted index
@@ -23,12 +25,14 @@ We have successfully refactored the bookmark search system to use a true inverte
 ### 2. Enhanced Search Relevance
 
 **Previous Implementation:**
+
 - Basic scoring based on simple token presence
 - Limited token generation due to size constraints
 - No field-specific boosts or relevance factors
 - Simplistic token matching logic
 
 **New Implementation:**
+
 - Field-specific boosts (title > domain > description > URL)
 - TF-IDF-like scoring algorithm
 - Freshness boost for newer documents
@@ -38,11 +42,13 @@ We have successfully refactored the bookmark search system to use a true inverte
 ### 3. Better Data Management
 
 **Previous Implementation:**
+
 - Inconsistent token storage (array vs. JSON string)
 - No proper cleanup of tokens when bookmarks were deleted
 - No way to rebuild the search index
 
 **New Implementation:**
+
 - Consistent index entry creation and deletion
 - Automatic cleanup when bookmarks are deleted
 - Index rebuilding functionality in the UI
@@ -51,11 +57,13 @@ We have successfully refactored the bookmark search system to use a true inverte
 ### 4. Improved Search Performance
 
 **Previous Implementation:**
+
 - Required fetching all bookmarks and filtering client-side
 - Initial token matching followed by detailed scoring
 - Limited parallelization
 
 **New Implementation:**
+
 - Direct index queries for each token
 - Batched bookmark fetching only for relevant IDs
 - Parallel processing of search operations
@@ -66,6 +74,7 @@ We have successfully refactored the bookmark search system to use a true inverte
 ### Inverted Index Structure
 
 Each search index entry in DynamoDB has the following structure:
+
 - `PK`: `SEARCH_INDEX#userId#token`
 - `SK`: `SEARCH_INDEX#bookmarkId`
 - `userId`: For querying by user
@@ -86,6 +95,7 @@ Each search index entry in DynamoDB has the following structure:
 ### Relevance Scoring Algorithm
 
 The new scoring system considers:
+
 - Field-specific matches (title, domain, description, URL)
 - Exact vs. partial matches
 - Word position and token overlap

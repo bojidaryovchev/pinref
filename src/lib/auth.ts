@@ -1,8 +1,7 @@
-import { TABLE_NAME } from "@/constants";
 import authConfig from "@/auth.config";
+import { TABLE_NAME } from "@/constants";
 import { DynamoDBAdapter } from "@next-auth/dynamodb-adapter";
-import { NextAuthOptions } from "next-auth";
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import { dynamoAuthDocClient } from "./db-client";
 
 export const authOptions: NextAuthOptions = {

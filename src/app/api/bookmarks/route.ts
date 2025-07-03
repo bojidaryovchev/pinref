@@ -1,12 +1,12 @@
+import { SEARCH_RESULTS_LIMIT } from "@/constants";
 import { authOptions } from "@/lib/auth";
 import { createBookmark, getUserBookmarks, searchBookmarks } from "@/lib/dynamodb";
 import { encryptBookmarkData } from "@/lib/encryption";
 import { extractMetadata, generateQueryTokens, generateSearchTokens } from "@/lib/metadata";
+import { createBookmarkSchema } from "@/schemas/bookmark.schema";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
-import { createBookmarkSchema } from "@/schemas/bookmark.schema";
-import { SEARCH_RESULTS_LIMIT } from "@/constants";
 import { ZodError } from "zod";
 
 export async function GET(request: NextRequest) {

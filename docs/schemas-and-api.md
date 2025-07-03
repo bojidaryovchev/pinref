@@ -7,11 +7,13 @@ This document describes all schemas and API endpoints used in the Pinref applica
 ### Bookmark Schema
 
 - `createBookmarkSchema`: Used when creating a new bookmark
+
   - `url`: String (required, URL format)
   - `categoryId`: String (optional)
   - `tagIds`: Array of Strings (optional)
 
 - `updateBookmarkSchema`: Used when updating an existing bookmark
+
   - `title`: String (optional)
   - `description`: String (optional)
   - `categoryId`: String (optional)
@@ -19,6 +21,7 @@ This document describes all schemas and API endpoints used in the Pinref applica
   - `isFavorite`: Boolean (optional)
 
 - `bookmarkSchema`: Represents a complete bookmark entity
+
   - `id`: String
   - `userId`: String
   - `url`: String
@@ -43,11 +46,13 @@ This document describes all schemas and API endpoints used in the Pinref applica
 ### Category Schema
 
 - `createCategorySchema`: Used when creating a new category
+
   - `name`: String (required, max 50 chars)
   - `icon`: String (required)
   - `color`: String (required)
 
 - `updateCategorySchema`: Used when updating an existing category
+
   - `name`: String (optional, max 50 chars)
   - `icon`: String (optional)
   - `color`: String (optional)
@@ -66,10 +71,12 @@ This document describes all schemas and API endpoints used in the Pinref applica
 ### Tag Schema
 
 - `createTagSchema`: Used when creating a new tag
+
   - `name`: String (required, max 30 chars)
   - `icon`: String (optional)
 
 - `updateTagSchema`: Used when updating an existing tag
+
   - `name`: String (optional, max 30 chars)
   - `icon`: String (optional)
 
@@ -86,6 +93,7 @@ This document describes all schemas and API endpoints used in the Pinref applica
 ### User Schema
 
 - `userSchema`: Represents a user entity
+
   - `id`: String
   - `email`: String (email format)
   - `name`: String
@@ -94,6 +102,7 @@ This document describes all schemas and API endpoints used in the Pinref applica
   - `updatedAt`: String (ISO date)
 
 - `userSettingsSchema`: Represents user settings
+
   - `userId`: String
   - `theme`: Enum ("light", "dark", "system"), default "system"
   - `defaultView`: Enum ("grid", "list"), default "grid"
@@ -116,17 +125,21 @@ This document describes all schemas and API endpoints used in the Pinref applica
 ### Bookmarks
 
 - `GET /api/bookmarks`: Get all bookmarks (with optional filtering)
+
   - Query parameters: `limit`, `category`, `tag`, `favorite`, `q`
   - Returns: Array of bookmarks and pagination info
 
 - `POST /api/bookmarks`: Create a new bookmark
+
   - Body: `createBookmarkSchema`
   - Returns: Created bookmark
 
 - `GET /api/bookmarks/:id`: Get a single bookmark
+
   - Returns: Bookmark or 404
 
 - `PUT /api/bookmarks/:id`: Update a bookmark
+
   - Body: `updateBookmarkSchema`
   - Returns: Updated bookmark
 
@@ -136,16 +149,20 @@ This document describes all schemas and API endpoints used in the Pinref applica
 ### Categories
 
 - `GET /api/categories`: Get all categories
+
   - Returns: Array of categories
 
 - `POST /api/categories`: Create a new category
+
   - Body: `createCategorySchema`
   - Returns: Created category
 
 - `GET /api/categories/:id`: Get a single category
+
   - Returns: Category or 404
 
 - `PUT /api/categories/:id`: Update a category
+
   - Body: `updateCategorySchema`
   - Returns: Updated category
 
@@ -155,16 +172,20 @@ This document describes all schemas and API endpoints used in the Pinref applica
 ### Tags
 
 - `GET /api/tags`: Get all tags
+
   - Returns: Array of tags
 
 - `POST /api/tags`: Create a new tag
+
   - Body: `createTagSchema`
   - Returns: Created tag
 
 - `GET /api/tags/:id`: Get a single tag
+
   - Returns: Tag or 404
 
 - `PUT /api/tags/:id`: Update a tag
+
   - Body: `updateTagSchema`
   - Returns: Updated tag
 
@@ -174,6 +195,7 @@ This document describes all schemas and API endpoints used in the Pinref applica
 ### User Settings
 
 - `GET /api/user/settings`: Get user settings
+
   - Returns: User settings or default settings
 
 - `PUT /api/user/settings`: Update user settings

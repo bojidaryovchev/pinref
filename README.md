@@ -7,7 +7,7 @@ A modern, secure, and intelligent bookmark management application built with Nex
 - **� Visual Bookmark Management**: Rich visual cards with automatic metadata extraction
 
   - Automatic title, description, and image extraction
-  - Favicon and domain recognition  
+  - Favicon and domain recognition
   - Favorites system for important bookmarks
   - Responsive card-based interface
 

@@ -15,11 +15,11 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useRebuildSearchIndex } from "@/hooks/use-api";
 import { Database, Palette, Settings, Shield, User } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { useRebuildSearchIndex } from "@/hooks/use-api";
 
 const SettingsDialog: React.FC = () => {
   const [open, setOpen] = useState(false);
@@ -47,7 +47,7 @@ const SettingsDialog: React.FC = () => {
 
   // Use the rebuild search index hook
   const { rebuild, isLoading: isRebuildingIndex } = useRebuildSearchIndex();
-  
+
   const handleRebuildSearchIndex = async () => {
     try {
       toast.loading("Rebuilding search index...", { id: "rebuild-index" });
@@ -225,12 +225,7 @@ const SettingsDialog: React.FC = () => {
                   <p>• Search tokens are generated for titles, descriptions, and domains</p>
                   <p>• Encrypted search maintains privacy while enabling functionality</p>
                 </div>
-                <Button 
-                  onClick={handleRebuildSearchIndex}
-                  variant="outline"
-                  size="sm"
-                  disabled={isRebuildingIndex}
-                >
+                <Button onClick={handleRebuildSearchIndex} variant="outline" size="sm" disabled={isRebuildingIndex}>
                   {isRebuildingIndex ? "Rebuilding..." : "Rebuild Search Index"}
                 </Button>
               </div>

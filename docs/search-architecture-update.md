@@ -7,17 +7,20 @@ We've successfully refactored the bookmark search system to use a true inverted 
 ## Key Improvements
 
 1. **True Inverted Index**:
+
    - Replaced storing all search tokens in a single attribute with individual index entries
    - Each token maps directly to the bookmarks containing it
    - Eliminated DynamoDB size limits for tokens
 
 2. **Enhanced Search Relevance**:
+
    - Added field-specific boosting (title, domain, description, URL)
    - Implemented TF-IDF-like scoring
    - Added freshness boost for newer bookmarks
    - Improved partial matching and prefix handling
 
 3. **Scalability**:
+
    - No more truncation of search tokens
    - Better distribution of index data
    - Efficient query patterns
@@ -51,6 +54,7 @@ We've successfully refactored the bookmark search system to use a true inverted 
 ### Rebuilding Index
 
 Users can rebuild their search index through the settings dialog, which:
+
 1. Fetches all their bookmarks
 2. Regenerates tokens from bookmark content
 3. Creates new index entries

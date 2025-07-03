@@ -1,35 +1,23 @@
 "use client";
 
+import BookmarkCard from "@/components/bookmark-card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useBookmarks } from "@/hooks/use-api";
 import { useState } from "react";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import BookmarkCard from "@/components/bookmark-card";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export default function BookmarksPage() {
   // Search state
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
-  
+
   // SWR hook for bookmarks
-  const { 
-    bookmarks, 
-    isLoading, 
-    error, 
-    refreshBookmarks
-  } = useBookmarks({
+  const { bookmarks, isLoading, error, refreshBookmarks } = useBookmarks({
     query: searchQuery || undefined,
     isFavorite: isFavorite || undefined,
-    limit: 50
+    limit: 50,
   });
 
   // Handle search submission
@@ -37,7 +25,7 @@ export default function BookmarksPage() {
     e.preventDefault();
     // The SWR hook will automatically refresh with the new query
   };
-  
+
   // Toggle favorite filter
   const handleToggleFavorite = () => {
     setIsFavorite(!isFavorite);
@@ -47,16 +35,16 @@ export default function BookmarksPage() {
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
-        <div className="flex justify-between items-center mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold">My Bookmarks</h1>
           <Skeleton className="h-10 w-32" />
         </div>
-        
+
         <div className="mb-6">
           <Skeleton className="h-10 w-full" />
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
             <Card key={i} className="h-64">
               <Skeleton className="h-full" />
@@ -74,12 +62,10 @@ export default function BookmarksPage() {
         <Card className="border-red-500">
           <CardHeader>
             <CardTitle className="text-red-500">Error</CardTitle>
-            <CardDescription>
-              There was an error loading your bookmarks.
-            </CardDescription>
+            <CardDescription>There was an error loading your bookmarks.</CardDescription>
           </CardHeader>
           <CardContent>
-            <p>{error.message || 'Unknown error occurred'}</p>
+            <p>{error.message || "Unknown error occurred"}</p>
           </CardContent>
           <CardFooter>
             <Button onClick={refreshBookmarks}>Try Again</Button>
@@ -91,12 +77,9 @@ export default function BookmarksPage() {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">My Bookmarks</h1>
-        <Button 
-          variant={isFavorite ? "default" : "outline"}
-          onClick={handleToggleFavorite}
-        >
+        <Button variant={isFavorite ? "default" : "outline"} onClick={handleToggleFavorite}>
           {isFavorite ? "All Bookmarks" : "Favorites Only"}
         </Button>
       </div>
@@ -121,12 +104,9 @@ export default function BookmarksPage() {
           <p className="text-muted-foreground">No bookmarks found.</p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {bookmarks.map((bookmark) => (
-            <BookmarkCard
-              key={bookmark.id}
-              bookmark={bookmark}
-            />
+            <BookmarkCard key={bookmark.id} bookmark={bookmark} />
           ))}
         </div>
       )}

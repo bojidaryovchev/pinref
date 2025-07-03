@@ -14,6 +14,7 @@ This guide covers the complete deployment process for Pinref, including environm
 ### 1. Local Development Setup
 
 1. **Clone the repository:**
+
    ```bash
    git clone <your-repo-url>
    cd pinref
@@ -21,33 +22,35 @@ This guide covers the complete deployment process for Pinref, including environm
    ```
 
 2. **Create local environment file:**
+
    ```bash
    cp .env.example .env.local
    ```
 
 3. **Configure .env.local for development:**
+
    ```bash
    # AWS Configuration (for local development)
    AWS_REGION=us-east-1
    AWS_ACCESS_KEY_ID=your_local_aws_access_key
    AWS_SECRET_ACCESS_KEY=your_local_aws_secret_key
-   
+
    # Database Configuration
    DYNAMODB_TABLE_NAME=pinref-bookmark-table-dev
-   
+
    # Authentication Configuration
    NEXTAUTH_SECRET=your_32_character_secret_for_local_dev
    NEXTAUTH_URL=http://localhost:3000
-   
+
    # OAuth Providers (get from respective platforms)
    GOOGLE_CLIENT_ID=your_google_client_id
    GOOGLE_CLIENT_SECRET=your_google_client_secret
    GITHUB_CLIENT_ID=your_github_client_id
    GITHUB_CLIENT_SECRET=your_github_client_secret
-   
+
    # Security Configuration
    ENCRYPTION_KEY=your_32_character_encryption_key
-   
+
    # Development settings
    DEPLOYMENT_ENV=development
    NODE_ENV=development
@@ -70,13 +73,15 @@ Configure the following secrets in your GitHub repository:
 ### Repository Settings > Secrets and Variables > Actions
 
 #### Required for All Environments
+
 ```
 AWS_ACCESS_KEY_ID          # AWS access key for deployment
-AWS_SECRET_ACCESS_KEY      # AWS secret key for deployment  
+AWS_SECRET_ACCESS_KEY      # AWS secret key for deployment
 AWS_REGION                 # AWS region (e.g., us-east-1)
 ```
 
 #### Production Environment Secrets
+
 ```
 NEXTAUTH_SECRET           # 32+ character random string
 ENCRYPTION_KEY           # 32+ character encryption key
@@ -86,7 +91,8 @@ GITHUB_CLIENT_ID         # GitHub OAuth client ID
 GITHUB_CLIENT_SECRET     # GitHub OAuth client secret
 ```
 
-#### Development Environment Secrets (with _DEV suffix)
+#### Development Environment Secrets (with \_DEV suffix)
+
 ```
 NEXTAUTH_SECRET_DEV      # Different secret for dev
 ENCRYPTION_KEY_DEV       # Different encryption key for dev
@@ -126,6 +132,7 @@ GITHUB_CLIENT_SECRET_DEV
 ### Manual Deployment
 
 1. **Deploy Development Environment:**
+
    ```bash
    npx sst deploy --stage dev
    ```
@@ -138,11 +145,13 @@ GITHUB_CLIENT_SECRET_DEV
 ### Automated Deployment via GitHub Actions
 
 #### Development Deployment
+
 - **Trigger**: Push to `main` branch
 - **Environment**: `dev`
 - **URL**: `https://dev.pinref.com`
 
 #### Production Deployment
+
 - **Trigger**: Manual workflow dispatch
 - **Environment**: `prod`
 - **URL**: `https://pinref.com`
@@ -187,6 +196,7 @@ SST automatically provisions SSL certificates via AWS Certificate Manager when y
 ### CloudWatch Logs
 
 Monitor application logs in AWS CloudWatch:
+
 - Lambda function logs
 - DynamoDB access patterns
 - Email delivery logs
@@ -194,6 +204,7 @@ Monitor application logs in AWS CloudWatch:
 ### DynamoDB Monitoring
 
 Key metrics to monitor:
+
 - Read/Write capacity units
 - Throttled requests
 - Item count growth
@@ -202,6 +213,7 @@ Key metrics to monitor:
 ### Cost Monitoring
 
 Set up AWS billing alerts for:
+
 - DynamoDB usage
 - Lambda invocations
 - CloudFront data transfer
@@ -212,10 +224,12 @@ Set up AWS billing alerts for:
 ### Common Deployment Issues
 
 1. **Domain not resolving:**
+
    - Check Route 53 hosted zone configuration
    - Verify DNS propagation (can take up to 48 hours)
 
 2. **OAuth not working:**
+
    - Verify callback URLs match exactly
    - Check client ID/secret configuration
    - Ensure secrets are set correctly
@@ -228,10 +242,12 @@ Set up AWS billing alerts for:
 ### Environment-specific Issues
 
 #### Development
+
 - Use `DYNAMODB_ENDPOINT=http://localhost:8000` for local DynamoDB
 - Ensure `.env.local` is not committed to git
 
 #### Production
+
 - Monitor CloudWatch for errors
 - Check SST resource linking
 - Verify all secrets are set
@@ -239,16 +255,19 @@ Set up AWS billing alerts for:
 ## Security Considerations
 
 ### Data Protection
+
 - All sensitive bookmark data is encrypted at rest
 - Environment variables stored securely in GitHub secrets
 - AWS IAM permissions follow least privilege principle
 
 ### Access Control
+
 - OAuth providers for authentication
 - User data isolation in DynamoDB
 - Secure session management with NextAuth
 
 ### Compliance
+
 - GDPR-compliant data handling
 - User data export/deletion capabilities
 - Audit logging for security events

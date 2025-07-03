@@ -6,10 +6,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-export async function GET(
-  request: NextRequest, 
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const session = await getServerSession(authOptions);
@@ -32,11 +29,11 @@ export async function GET(
     // Decrypt sensitive data before returning
     if (bookmarkData.url || bookmarkData.title || bookmarkData.description) {
       const decryptedData = decryptBookmarkData({
-        url: bookmarkData.url || '',
+        url: bookmarkData.url || "",
         title: bookmarkData.title,
         description: bookmarkData.description,
       });
-      
+
       bookmarkData.url = decryptedData.url;
       bookmarkData.title = decryptedData.title;
       bookmarkData.description = decryptedData.description;
@@ -49,10 +46,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: NextRequest, 
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const session = await getServerSession(authOptions);
@@ -75,16 +69,16 @@ export async function PUT(
     const updateData = updateBookmarkSchema.parse(body);
 
     const updatedBookmark = await updateBookmark(id, updateData);
-    
+
     // Decrypt sensitive data before returning
     const responseData = updatedBookmark as { url?: string; title?: string; description?: string };
     if (responseData.url || responseData.title || responseData.description) {
       const decryptedData = decryptBookmarkData({
-        url: responseData.url || '',
+        url: responseData.url || "",
         title: responseData.title,
         description: responseData.description,
       });
-      
+
       responseData.url = decryptedData.url;
       responseData.title = decryptedData.title;
       responseData.description = decryptedData.description;
@@ -94,19 +88,19 @@ export async function PUT(
   } catch (error) {
     console.error("Error updating bookmark:", error);
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ 
-        error: "Invalid request data", 
-        details: error.errors 
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: "Invalid request data",
+          details: error.errors,
+        },
+        { status: 400 },
+      );
     }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
-export async function DELETE(
-  request: NextRequest, 
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const session = await getServerSession(authOptions);

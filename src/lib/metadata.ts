@@ -84,14 +84,14 @@ export async function extractMetadata(url: string): Promise<UrlMetadata> {
 
 /**
  * Generate search tokens for inverted index
- * 
+ *
  * This function creates a comprehensive set of tokens for the inverted index:
  * - Whole words for exact matching
  * - Prefixes for autocomplete
  * - Character n-grams for partial matching
  * - Word n-grams for phrase matching
- * 
- * Since we're using a true inverted index now, we don't need to worry about 
+ *
+ * Since we're using a true inverted index now, we don't need to worry about
  * the 1KB DynamoDB size limit anymore - each token is stored as a separate entry.
  */
 export function generateSearchTokens(text: string): string[] {
@@ -99,24 +99,24 @@ export function generateSearchTokens(text: string): string[] {
 
   const normalizedText = text.toLowerCase().trim();
   const tokens = new Set<string>();
-  
+
   // Split into words
   const words = normalizedText.split(/\s+/).filter((word) => word.length > 0);
-  
+
   // Limit to reasonable number of words for processing
   const limitedWords = words.slice(0, 100);
-  
+
   // Add the full original text for exact phrase matching
   if (normalizedText.length <= 100) {
     tokens.add(normalizedText);
   }
-  
+
   // Add individual words - most important for search
   for (const word of limitedWords) {
     // Skip very short or very long words
     if (word.length >= 2 && word.length <= 50) {
       tokens.add(word);
-      
+
       // Add prefixes for autocomplete (first 2+ chars)
       if (word.length >= 5) {
         for (let i = 2; i <= Math.min(word.length - 1, 6); i++) {
@@ -125,7 +125,7 @@ export function generateSearchTokens(text: string): string[] {
       }
     }
   }
-  
+
   // Add small word n-grams for phrase search
   for (let i = 0; i < Math.min(limitedWords.length, 25); i++) {
     for (let j = i + 1; j <= Math.min(i + 3, limitedWords.length); j++) {
@@ -135,9 +135,9 @@ export function generateSearchTokens(text: string): string[] {
       }
     }
   }
-  
+
   // Add domain-specific tokens if the text looks like a domain
-  if (text.includes('.')) {
+  if (text.includes(".")) {
     const domainParts = text.split(/[.-]/);
     for (const part of domainParts) {
       if (part.length >= 2) {

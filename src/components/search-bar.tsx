@@ -2,8 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import { PLACEHOLDERS, SEARCH_DEBOUNCE_MS } from "@/constants";
+import { cn } from "@/lib/utils";
 import { Search, X } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";

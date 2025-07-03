@@ -1,4 +1,4 @@
-import type { Bookmark } from './bookmark';
+import type { Bookmark } from "./bookmark";
 
 export interface BookmarkCardProps {
   bookmark: Bookmark;

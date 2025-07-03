@@ -27,10 +27,8 @@ const BookmarkCard: React.FC<Props> = ({ bookmark, categories = [], tags = [], o
   const handleImageError = () => setImageError(true);
 
   // Get category and tag names
-  const category = categories.find(c => c.id === bookmark.categoryId);
-  const bookmarkTags = bookmark.tagIds?.map(tagId => 
-    tags.find(t => t.id === tagId)
-  ).filter(Boolean) || [];
+  const category = categories.find((c) => c.id === bookmark.categoryId);
+  const bookmarkTags = bookmark.tagIds?.map((tagId) => tags.find((t) => t.id === tagId)).filter(Boolean) || [];
 
   const handleFavoriteToggle = async () => {
     setIsProcessing(true);
@@ -50,7 +48,7 @@ const BookmarkCard: React.FC<Props> = ({ bookmark, categories = [], tags = [], o
       setShowDeleteConfirm(true);
       return;
     }
-    
+
     setIsProcessing(true);
     try {
       await removeBookmark(bookmark.id);
@@ -170,10 +168,10 @@ const BookmarkCard: React.FC<Props> = ({ bookmark, categories = [], tags = [], o
             </a>
 
             <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-7 w-7 p-0" 
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0"
                 onClick={() => onEdit?.(bookmark)}
                 aria-label="Edit bookmark"
                 disabled={isProcessing}
@@ -185,9 +183,9 @@ const BookmarkCard: React.FC<Props> = ({ bookmark, categories = [], tags = [], o
                 size="sm"
                 className={cn(
                   "h-7 w-7 p-0",
-                  showDeleteConfirm 
-                    ? "text-red-600 bg-red-50 hover:bg-red-100" 
-                    : "text-destructive hover:text-destructive"
+                  showDeleteConfirm
+                    ? "bg-red-50 text-red-600 hover:bg-red-100"
+                    : "text-destructive hover:text-destructive",
                 )}
                 onClick={handleDelete}
                 disabled={isProcessing}

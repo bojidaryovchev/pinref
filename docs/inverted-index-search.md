@@ -31,6 +31,7 @@ Each search index entry uses the following DynamoDB structure:
 ### 3. Index Creation
 
 The `createSearchIndexEntries` function creates search index entries for a bookmark by:
+
 1. De-duplicating search tokens
 2. Processing tokens in batches (to avoid DynamoDB limits)
 3. Creating one DynamoDB entry per token-bookmark pair
@@ -38,6 +39,7 @@ The `createSearchIndexEntries` function creates search index entries for a bookm
 ### 4. Search Process
 
 The `searchBookmarks` function:
+
 1. Queries the inverted index for each search token
 2. Collects matching bookmark IDs
 3. Scores bookmarks based on how many search tokens they match
@@ -59,12 +61,14 @@ The search system uses a sophisticated scoring algorithm that considers:
 ### Token Generation
 
 Search tokens are generated from:
+
 - Bookmark title
 - Description
 - URL
 - Domain
 
 The tokenization process creates:
+
 - Full words
 - Character n-grams for partial matching
 - Word n-grams for phrase matching
@@ -78,6 +82,7 @@ The tokenization process creates:
 ### Index Maintenance
 
 The system includes a "Rebuild Search Index" function that:
+
 1. Gets all a user's bookmarks
 2. Deletes existing index entries
 3. Regenerates search tokens from bookmark content

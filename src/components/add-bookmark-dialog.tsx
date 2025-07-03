@@ -13,13 +13,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createBookmarkSchema, type CreateBookmarkInput } from "@/schemas/bookmark.schema";
 import { ERROR_MESSAGES, PLACEHOLDERS, TOAST_MESSAGES } from "@/constants";
 import { useBookmarks } from "@/hooks/use-api";
+import { createBookmarkSchema, type CreateBookmarkInput } from "@/schemas/bookmark.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Plus } from "lucide-react";
 import type React from "react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
@@ -68,8 +68,8 @@ const AddBookmarkDialog: React.FC<Props> = ({ categories, tags }) => {
 
   const handleTagToggle = (tagId: string) => {
     const currentTags = form.getValues("tagIds") || [];
-    const newTags = currentTags.includes(tagId) 
-      ? currentTags.filter((id: string) => id !== tagId) 
+    const newTags = currentTags.includes(tagId)
+      ? currentTags.filter((id: string) => id !== tagId)
       : [...currentTags, tagId];
     form.setValue("tagIds", newTags);
   };
@@ -148,12 +148,7 @@ const AddBookmarkDialog: React.FC<Props> = ({ categories, tags }) => {
           )}
 
           <div className="flex justify-end gap-2">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => setOpen(false)}
-              disabled={isLoading}
-            >
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isLoading}>
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading}>

@@ -33,7 +33,7 @@ function hexToBytes(hex: string): Uint8Array {
  */
 function bytesToHex(bytes: Uint8Array): string {
   return Array.from(bytes)
-    .map(byte => byte.toString(16).padStart(2, "0"))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
 }
 
@@ -53,28 +53,24 @@ async function getCryptoKey(): Promise<CryptoKey> {
   try {
     // Create a salt based on the app info for consistency
     const salt = encoder.encode(APP_INFO);
-    
+
     // Import the raw key material
-    const keyMaterial = await crypto.subtle.importKey(
-      "raw",
-      encoder.encode(ENCRYPTION_KEY),
-      KEY_ALGORITHM,
-      false,
-      ["deriveKey"]
-    );
-    
+    const keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(ENCRYPTION_KEY), KEY_ALGORITHM, false, [
+      "deriveKey",
+    ]);
+
     // Derive a key suitable for AES-GCM
     return await crypto.subtle.deriveKey(
       {
         name: KEY_ALGORITHM.name,
         salt,
         iterations: 100000,
-        hash: KEY_ALGORITHM.hash
+        hash: KEY_ALGORITHM.hash,
       },
       keyMaterial,
       ALGORITHM,
       false,
-      KEY_USAGE
+      KEY_USAGE,
     );
   } catch (error) {
     console.error("Key derivation error:", error);
@@ -89,18 +85,18 @@ export async function encryptAsync(text: string): Promise<string> {
   try {
     const key = await getCryptoKey();
     const iv = randomBytes(IV_LENGTH);
-    
+
     // Encrypt the text
     const encryptedBuffer = await crypto.subtle.encrypt(
       {
         name: ALGORITHM.name,
         iv,
-        additionalData: encoder.encode(APP_INFO)
+        additionalData: encoder.encode(APP_INFO),
       },
       key,
-      encoder.encode(text)
+      encoder.encode(text),
     );
-    
+
     // Combine IV + encrypted data as hex string
     return bytesToHex(iv) + bytesToHex(new Uint8Array(encryptedBuffer));
   } catch (error) {
@@ -115,22 +111,22 @@ export async function encryptAsync(text: string): Promise<string> {
 export async function decryptAsync(encryptedData: string): Promise<string> {
   try {
     const key = await getCryptoKey();
-    
+
     // Extract IV and encrypted data
     const iv = hexToBytes(encryptedData.slice(0, IV_LENGTH * 2));
     const encrypted = hexToBytes(encryptedData.slice(IV_LENGTH * 2));
-    
+
     // Decrypt the data
     const decryptedBuffer = await crypto.subtle.decrypt(
       {
         name: ALGORITHM.name,
         iv,
-        additionalData: encoder.encode(APP_INFO)
+        additionalData: encoder.encode(APP_INFO),
       },
       key,
-      encrypted
+      encrypted,
     );
-    
+
     return decoder.decode(decryptedBuffer);
   } catch (error) {
     console.error("Decryption error:", error);
@@ -168,11 +164,11 @@ export function generateSearchTokens(text: string): string[] {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32bit integer
     }
     // Convert to hex string with padding
-    return (hash >>> 0).toString(16).padStart(8, '0');
+    return (hash >>> 0).toString(16).padStart(8, "0");
   };
 
   // Split by word boundaries and create hashed n-grams
@@ -202,8 +198,8 @@ export function generateSearchTokens(text: string): string[] {
 export function encryptSync(text: string): string {
   // Simple XOR encryption with a key derived from ENCRYPTION_KEY
   // This is a simplified fallback and should be replaced with proper async implementation
-  const key = Array.from(ENCRYPTION_KEY).map(char => char.charCodeAt(0));
-  let result = '';
+  const key = Array.from(ENCRYPTION_KEY).map((char) => char.charCodeAt(0));
+  let result = "";
   for (let i = 0; i < text.length; i++) {
     const charCode = text.charCodeAt(i) ^ key[i % key.length];
     result += String.fromCharCode(charCode);
@@ -214,9 +210,9 @@ export function encryptSync(text: string): string {
 export function decryptSync(encryptedData: string): string {
   try {
     // Simple XOR decryption with a key derived from ENCRYPTION_KEY
-    const key = Array.from(ENCRYPTION_KEY).map(char => char.charCodeAt(0));
+    const key = Array.from(ENCRYPTION_KEY).map((char) => char.charCodeAt(0));
     const encText = atob(encryptedData);
-    let result = '';
+    let result = "";
     for (let i = 0; i < encText.length; i++) {
       const charCode = encText.charCodeAt(i) ^ key[i % key.length];
       result += String.fromCharCode(charCode);
@@ -300,7 +296,7 @@ export async function migrateToAsyncEncryption(data: string): Promise<string> {
 }
 
 /**
- * Compatibility layer - these functions provide sync-like API 
+ * Compatibility layer - these functions provide sync-like API
  * while logging warnings about future migration needs
  */
 

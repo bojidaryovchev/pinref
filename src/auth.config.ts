@@ -1,7 +1,6 @@
-import { GoogleProfile } from "next-auth/providers/google";
-import GoogleProvider from "next-auth/providers/google";
 import type { NextAuthOptions, Session, User } from "next-auth";
 import type { JWT } from "next-auth/jwt";
+import GoogleProvider, { GoogleProfile } from "next-auth/providers/google";
 
 // Extend the session type to include user ID
 declare module "next-auth" {
@@ -39,12 +38,12 @@ const authConfig: NextAuthOptions = {
       },
     }),
   ],
-  
+
   pages: {
     signIn: "/auth",
     error: "/auth?error=true",
   },
-  
+
   callbacks: {
     async jwt({ token, user }: { token: JWT; user?: User }) {
       if (user) {
@@ -52,7 +51,7 @@ const authConfig: NextAuthOptions = {
       }
       return token;
     },
-  
+
     async session({ session, token }: { session: Session; token: JWT }) {
       if (session.user) {
         session.user.id = token.id as string;
@@ -60,9 +59,9 @@ const authConfig: NextAuthOptions = {
       return session;
     },
   },
-  
+
   secret: process.env.NEXTAUTH_SECRET,
-  
+
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days

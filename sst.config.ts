@@ -49,13 +49,14 @@ export default $config({
           // This allows efficient querying of all entities by user and type
         },
         InvertedIndex: {
-          hashKey: "userId", 
+          hashKey: "userId",
           rangeKey: "token",
           // This enables searching with a true inverted index pattern
-          projection: ["bookmarkId"]
-        }
+          // We need to project all attributes needed for the index
+          projection: "all",
+        },
       },
-      stream: "new-and-old-images" // For real-time updates and triggers
+      stream: "new-and-old-images", // For real-time updates and triggers
     });
 
     // Create a SES domain identity with DMARC policy for email sending

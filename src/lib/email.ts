@@ -3,10 +3,10 @@
  * This file should only be imported in API routes
  */
 
-import { SendEmailCommand, SESv2Client } from "@aws-sdk/client-sesv2";
-import { Resource } from "sst";
 import { CONTACT_EMAIL } from "@/constants";
 import type { ContactFormPayload } from "@/types/contact-form-payload";
+import { SendEmailCommand, SESv2Client } from "@aws-sdk/client-sesv2";
+import { Resource } from "sst";
 
 export const sendContactFormEmail = async ({ name, email, message }: ContactFormPayload) => {
   const client = new SESv2Client();
@@ -41,7 +41,7 @@ export const sendContactFormEmail = async ({ name, email, message }: ContactForm
           },
         },
       },
-    })
+    }),
   );
 
   return { success: true };

@@ -7,10 +7,12 @@ import { userSettingsSchema } from "./user.schema";
 /**
  * Schema for updating user settings
  */
-export const updateUserSettingsSchema = userSettingsSchema.pick({
-  theme: true,
-  defaultView: true,
-  bookmarksPerPage: true,
-}).partial();
+export const updateUserSettingsSchema = userSettingsSchema
+  .pick({
+    theme: true,
+    defaultView: true,
+    bookmarksPerPage: true,
+  })
+  .partial();
 
 export type UpdateUserSettingsInput = z.infer<typeof updateUserSettingsSchema>;

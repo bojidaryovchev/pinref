@@ -9,12 +9,12 @@ import {
   deleteBookmark,
   deleteCategory,
   deleteTag,
+  rebuildSearchIndex,
   toggleBookmarkFavorite,
   updateBookmark,
   updateCategory,
   updateTag,
   updateUserSettings,
-  rebuildSearchIndex,
 } from "@/API";
 import { API_ENDPOINTS, SWR_CONFIG } from "@/constants";
 import type { Bookmark, BookmarkQueryOptions, CreateBookmarkInput } from "@/schemas/bookmark.schema";
@@ -244,13 +244,13 @@ export function useRebuildSearchIndex() {
     try {
       // Start loading
       mutate(undefined, false);
-      
+
       // Call the API
       const result = await rebuildSearchIndex();
-      
+
       // Update with the result
       mutate(result, false);
-      
+
       return result;
     } catch (error) {
       // Update with the error

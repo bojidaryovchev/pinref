@@ -1,15 +1,12 @@
 import { authOptions } from "@/lib/auth";
 import { deleteTag, getTagById, updateTag } from "@/lib/dynamodb";
-import { encryptTagData, decryptTagData } from "@/lib/encryption";
+import { decryptTagData, encryptTagData } from "@/lib/encryption";
 import { updateTagSchema } from "@/schemas/tag.schema";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-export async function GET(
-  request: NextRequest, 
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const session = await getServerSession(authOptions);
@@ -28,7 +25,7 @@ export async function GET(
     if (tagData.userId !== session.user.email) {
       return NextResponse.json({ error: "Tag not found" }, { status: 404 });
     }
-    
+
     // Decrypt sensitive data before returning
     if (tagData.name) {
       tagData.name = decryptTagData({ name: tagData.name }).name;
@@ -41,10 +38,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: NextRequest, 
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const session = await getServerSession(authOptions);
@@ -67,7 +61,7 @@ export async function PUT(
     const updateData = updateTagSchema.parse(body);
 
     // Encrypt sensitive data if name is being updated
-    const processedData = updateData.name 
+    const processedData = updateData.name
       ? { ...updateData, name: encryptTagData({ name: updateData.name }).name }
       : updateData;
 
@@ -83,19 +77,19 @@ export async function PUT(
   } catch (error) {
     console.error("Error updating tag:", error);
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ 
-        error: "Invalid request data", 
-        details: error.errors 
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: "Invalid request data",
+          details: error.errors,
+        },
+        { status: 400 },
+      );
     }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
-export async function DELETE(
-  request: NextRequest, 
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const session = await getServerSession(authOptions);
