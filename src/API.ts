@@ -15,27 +15,56 @@ import { UpdateUserSettingsInput } from "./schemas/user-settings.schema";
 import { UserSettings } from "./schemas/user.schema";
 
 /**
- * Resilient fetch utility that handles URL parsing errors by retrying with absolute URLs
+ * Resilient fetch utility that handles URL parsing errors and authentication issues
+ * 
+ * This function:
+ * 1. First tries with the provided URL
+ * 2. If URL parsing fails, retries with absolute URL
+ * 3. Handles 401 errors with more detailed error messages
  */
 async function resilientFetch<T>(url: string, options: RequestInit = {}): Promise<T> {
   try {
+    // Always ensure credentials are included
+    const fetchOptions: RequestInit = {
+      ...options,
+      credentials: "include", // Always include credentials
+    };
+
     // First try with the provided URL
-    const response = await fetch(url, options);
+    const response = await fetch(url, fetchOptions);
     
     if (!response.ok) {
+      // Special handling for authentication errors
+      if (response.status === 401) {
+        console.error(`[resilientFetch] Authentication error (401) for URL: ${url}`);
+        throw new Error("Authentication failed - Please log in again");
+      }
+      
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
     
     return await response.json();
   } catch (error) {
-    // If URL parsing fails, retry with absolute URL
+    // Handle URL parsing errors by retrying with absolute URL
     if (error instanceof TypeError && error.message.includes('Failed to parse URL')) {
       console.warn(`[resilientFetch] Retrying with absolute URL: ${url}`);
       const absoluteUrl = getAbsoluteUrl(url);
       
-      const response = await fetch(absoluteUrl, options);
+      // Ensure credentials are included in the retry
+      const fetchOptions: RequestInit = {
+        ...options,
+        credentials: "include", // Always include credentials
+      };
+      
+      const response = await fetch(absoluteUrl, fetchOptions);
       
       if (!response.ok) {
+        // Special handling for authentication errors on retry
+        if (response.status === 401) {
+          console.error(`[resilientFetch] Authentication error (401) for absolute URL: ${absoluteUrl}`);
+          throw new Error("Authentication failed - Please log in again");
+        }
+        
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
       
@@ -118,6 +147,7 @@ export const getBookmarks = async (
     totalPages: number;
   };
 }> => {
+  // In server actions, we need to pass auth cookies
   const params = new URLSearchParams();
 
   if (options.limit) params.append("limit", options.limit.toString());
@@ -126,19 +156,77 @@ export const getBookmarks = async (
   if (options.isFavorite) params.append("favorite", "true");
   if (options.query) params.append("q", options.query);
 
-  const url = `${API_ENDPOINTS.BOOKMARKS}?${params.toString()}`;
-  return resilientFetch<{
-    bookmarks: Bookmark[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
+  // First try direct import from server components
+  try {
+    // Import server-side functions directly
+    // This approach avoids the need for fetch and authentication issues
+    const { getUserBookmarks, searchBookmarks } = await import('./lib/dynamodb');
+    const { getServerSession } = await import('next-auth');
+    const { authOptions } = await import('./lib/auth');
+    const { generateQueryTokens } = await import('./lib/metadata');
+    
+    // Get the session
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.email) {
+      throw new Error("Authentication required");
+    }
+    
+    let bookmarks;
+    
+    if (options.query) {
+      // Enhanced n-gram search functionality
+      const searchTokens = generateQueryTokens(options.query);
+      bookmarks = await searchBookmarks(session.user.email, searchTokens);
+    } else {
+      // Regular listing with filters
+      const queryOptions: { limit: number; categoryId?: string; isFavorite?: boolean } = { 
+        limit: options.limit || 100 
+      };
+
+      if (options.categoryId) queryOptions.categoryId = options.categoryId;
+      if (options.isFavorite) queryOptions.isFavorite = true;
+
+      const result = await getUserBookmarks(session.user.email, queryOptions);
+      bookmarks = result.items;
+    }
+    
+    // Filter by tag if specified (client-side filtering for simplicity)
+    if (options.tagId) {
+      bookmarks = bookmarks.filter((bookmark: unknown) => {
+        const bookmarkObj = bookmark as { tagIds?: string[] };
+        return bookmarkObj.tagIds && bookmarkObj.tagIds.includes(options.tagId!);
+      });
+    }
+    
+    // Return in the same format as the API would
+    return {
+      bookmarks: bookmarks as Bookmark[],
+      pagination: {
+        page: 1,
+        limit: options.limit || 100,
+        total: bookmarks.length,
+        totalPages: 1,
+      }
     };
-  }>(url, {
-    credentials: "include", // Include credentials for authentication
-    next: { tags: [CACHE_TAGS.BOOKMARKS] }, // Add tag for cache invalidation
-  });
+  } catch (directError) {
+    console.error("Direct import method failed:", directError);
+    
+    // Fall back to resilient fetch if direct method fails
+    const url = `${API_ENDPOINTS.BOOKMARKS}?${params.toString()}`;
+    return resilientFetch<{
+      bookmarks: Bookmark[];
+      pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+      };
+    }>(url, {
+      credentials: "include", // Include credentials for authentication
+      next: { tags: [CACHE_TAGS.BOOKMARKS] }, // Add tag for cache invalidation
+    });
+  }
 };
 
 // Get a single bookmark by ID
