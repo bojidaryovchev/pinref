@@ -32,7 +32,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       categoryData.name = decryptCategoryData({ name: categoryData.name }).name;
     }
 
-    return NextResponse.json(category);
+    return NextResponse.json(categoryData);
   } catch (error) {
     console.error("Error fetching category:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -39,7 +39,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       bookmarkData.description = decryptedData.description;
     }
 
-    return NextResponse.json(bookmark);
+    return NextResponse.json(bookmarkData);
   } catch (error) {
     console.error("Error fetching bookmark:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -84,7 +84,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       responseData.description = decryptedData.description;
     }
 
-    return NextResponse.json(updatedBookmark);
+    return NextResponse.json(responseData);
   } catch (error) {
     console.error("Error updating bookmark:", error);
     if (error instanceof z.ZodError) {

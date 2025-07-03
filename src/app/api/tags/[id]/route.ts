@@ -31,7 +31,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       tagData.name = decryptTagData({ name: tagData.name }).name;
     }
 
-    return NextResponse.json(tag);
+    return NextResponse.json(tagData);
   } catch (error) {
     console.error("Error fetching tag:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
