@@ -86,9 +86,6 @@ export default $config({
       },
       environment: {
         DEPLOYMENT_ENV: $app.stage,
-        AWS_REGION: process.env.AWS_REGION!,
-        AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID!,
-        AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY!,
         DYNAMODB_TABLE_NAME: dynamoTable.name,
         ENCRYPTION_KEY: process.env.ENCRYPTION_KEY!,
         GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID!,
