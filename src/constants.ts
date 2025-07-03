@@ -100,7 +100,10 @@ export const API_ENDPOINTS = {
 
 /** SWR Configuration */
 export const SWR_CONFIG = {
-  REFRESH_INTERVAL: 60000, // 1 minute
+  REFRESH_INTERVAL: 300000, // 5 minutes (reduced frequency)
+  REVALIDATE_ON_FOCUS: false, // Prevent revalidation when window gains focus
+  REVALIDATE_ON_RECONNECT: true, // Revalidate when reconnecting
+  DEDUPING_INTERVAL: 5000, // 5 seconds deduping interval
   BOOKMARK_CACHE_KEY: "bookmarks",
   CATEGORY_CACHE_KEY: "categories",
   TAG_CACHE_KEY: "tags",

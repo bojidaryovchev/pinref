@@ -17,19 +17,26 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
-    jwt: async ({ token, user }) => {
-      if (user) {
-        token.id = user.id;
+    jwt: async ({ token, user, account }) => {
+      // Initial sign in
+      if (account && user) {
+        return {
+          ...token,
+          id: user.id,
+          accessToken: account.access_token,
+        };
       }
+      // Return previous token if the access token has not expired yet
       return token;
     },
     session: ({ session, token }) => ({
       ...session,
       user: {
         ...session.user,
-        id: token.sub,
+        id: token.sub || token.id,
       },
     }),
   },

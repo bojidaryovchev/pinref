@@ -26,9 +26,10 @@ export const fetcher = async <T>(url: string): Promise<T> => {
  * Default configuration for SWR hooks
  */
 export const defaultSWRConfig = {
-  revalidateOnFocus: true,
+  revalidateOnFocus: false, // Prevent revalidation when window gains focus
   revalidateOnReconnect: true,
   errorRetryCount: 3,
   shouldRetryOnError: true,
   refreshWhenHidden: false,
+  dedupingInterval: 5000, // 5 seconds deduping interval
 };

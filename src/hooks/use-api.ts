@@ -49,6 +49,9 @@ export function useBookmarks(options: BookmarkQueryOptions = { limit: 20 }) {
     };
   }>(url, fetcher, {
     refreshInterval: SWR_CONFIG.REFRESH_INTERVAL,
+    revalidateOnFocus: SWR_CONFIG.REVALIDATE_ON_FOCUS,
+    revalidateOnReconnect: SWR_CONFIG.REVALIDATE_ON_RECONNECT,
+    dedupingInterval: SWR_CONFIG.DEDUPING_INTERVAL,
   });
 
   // Helper function to refresh data
@@ -102,6 +105,9 @@ export function useBookmarks(options: BookmarkQueryOptions = { limit: 20 }) {
 export function useCategories() {
   const { data, error, isLoading, mutate } = useSWR<Category[]>(API_ENDPOINTS.CATEGORIES, fetcher, {
     refreshInterval: SWR_CONFIG.REFRESH_INTERVAL,
+    revalidateOnFocus: SWR_CONFIG.REVALIDATE_ON_FOCUS,
+    revalidateOnReconnect: SWR_CONFIG.REVALIDATE_ON_RECONNECT,
+    dedupingInterval: SWR_CONFIG.DEDUPING_INTERVAL,
   });
 
   // Helper function to refresh data
@@ -146,6 +152,9 @@ export function useCategories() {
 export function useTags() {
   const { data, error, isLoading, mutate } = useSWR<Tag[]>(API_ENDPOINTS.TAGS, fetcher, {
     refreshInterval: SWR_CONFIG.REFRESH_INTERVAL,
+    revalidateOnFocus: SWR_CONFIG.REVALIDATE_ON_FOCUS,
+    revalidateOnReconnect: SWR_CONFIG.REVALIDATE_ON_RECONNECT,
+    dedupingInterval: SWR_CONFIG.DEDUPING_INTERVAL,
   });
 
   // Helper function to refresh data
@@ -190,6 +199,9 @@ export function useTags() {
 export function useUserSettings() {
   const { data, error, isLoading, mutate } = useSWR<UserSettings>(API_ENDPOINTS.USER_SETTINGS, fetcher, {
     refreshInterval: SWR_CONFIG.REFRESH_INTERVAL,
+    revalidateOnFocus: SWR_CONFIG.REVALIDATE_ON_FOCUS,
+    revalidateOnReconnect: SWR_CONFIG.REVALIDATE_ON_RECONNECT,
+    dedupingInterval: SWR_CONFIG.DEDUPING_INTERVAL,
   });
 
   // Helper function to refresh data

@@ -66,6 +66,18 @@ const Home: React.FC = () => {
   };
 
 
+  // Check authentication status
+  if (status === "unauthenticated") {
+    // If user is not authenticated, redirect them to auth page (should be handled by middleware)
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <p className="text-muted-foreground">Redirecting to login...</p>
+      </div>
+    );
+  }
+
+  // Show loading state while data is being fetched
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
