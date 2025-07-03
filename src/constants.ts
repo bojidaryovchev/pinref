@@ -111,6 +111,15 @@ export const SWR_CONFIG = {
   TAG_CACHE_KEY: "tags",
 };
 
+/** Cache tags for revalidation */
+export const CACHE_TAGS = {
+  BOOKMARKS: "bookmarks",
+  CATEGORIES: "categories",
+  TAGS: "tags",
+  USER_SETTINGS: "user-settings",
+  SEARCH_INDEX: "search-index",
+};
+
 /** Search configuration */
 export const SEARCH_RESULTS_LIMIT = 100;
 export const MIN_SEARCH_CHARS = 2;
