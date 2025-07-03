@@ -58,7 +58,6 @@ export default auth((req) => {
   if (!req.auth) {
     // For API routes, return 401 instead of redirecting
     if (pathname.startsWith("/api/")) {
-      console.error(`[Middleware] 401 Unauthorized for API path: ${pathname}`);
       return new NextResponse(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: {
@@ -69,7 +68,8 @@ export default auth((req) => {
 
     // Include the current path as returnUrl for post-login redirect
     const returnUrl = encodeURIComponent(pathname);
-    return NextResponse.redirect(new URL(`/auth?returnUrl=${returnUrl}`, req.url));
+    const baseUrl = `${req.nextUrl.protocol}//${req.nextUrl.host}`;
+    return NextResponse.redirect(new URL(`/auth?returnUrl=${returnUrl}`, baseUrl));
   }
 
   return res;
