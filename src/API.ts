@@ -7,6 +7,7 @@
 
 import { revalidateTag } from "next/cache";
 import { API_ENDPOINTS, CACHE_TAGS } from "./constants";
+import { getAbsoluteUrl } from "./lib/env";
 import { Bookmark, BookmarkQueryOptions, CreateBookmarkInput } from "./schemas/bookmark.schema";
 import { Category, CreateCategoryInput } from "./schemas/category.schema";
 import { CreateTagInput, Tag } from "./schemas/tag.schema";
@@ -92,7 +93,7 @@ export const getBookmarks = async (
   if (options.isFavorite) params.append("favorite", "true");
   if (options.query) params.append("q", options.query);
 
-  const url = `${API_ENDPOINTS.BOOKMARKS}?${params.toString()}`;
+  const url = getAbsoluteUrl(`${API_ENDPOINTS.BOOKMARKS}?${params.toString()}`);
   const response = await fetch(url, {
     credentials: "include", // Include credentials for authentication
     next: { tags: [CACHE_TAGS.BOOKMARKS] }, // Add tag for cache invalidation
@@ -107,7 +108,7 @@ export const getBookmarks = async (
 
 // Get a single bookmark by ID
 export const getBookmark = async (id: string): Promise<Bookmark> => {
-  const response = await fetch(API_ENDPOINTS.BOOKMARK_BY_ID(id), {
+  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.BOOKMARK_BY_ID(id)), {
     credentials: "include", // Include credentials for authentication
     next: { tags: [CACHE_TAGS.BOOKMARKS] },
   });
@@ -121,7 +122,7 @@ export const getBookmark = async (id: string): Promise<Bookmark> => {
 
 // Create a new bookmark
 export const createBookmark = async (data: CreateBookmarkInput): Promise<Bookmark> => {
-  const response = await fetch(API_ENDPOINTS.BOOKMARKS, {
+  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.BOOKMARKS), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -140,7 +141,7 @@ export const createBookmark = async (data: CreateBookmarkInput): Promise<Bookmar
 
 // Update an existing bookmark
 export const updateBookmark = async (id: string, data: Partial<CreateBookmarkInput>): Promise<Bookmark> => {
-  const response = await fetch(API_ENDPOINTS.BOOKMARK_BY_ID(id), {
+  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.BOOKMARK_BY_ID(id)), {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -159,7 +160,7 @@ export const updateBookmark = async (id: string, data: Partial<CreateBookmarkInp
 
 // Delete a bookmark
 export const deleteBookmark = async (id: string): Promise<void> => {
-  const response = await fetch(API_ENDPOINTS.BOOKMARK_BY_ID(id), {
+  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.BOOKMARK_BY_ID(id)), {
     method: "DELETE",
     credentials: "include", // Include credentials for authentication
   });
@@ -174,7 +175,7 @@ export const deleteBookmark = async (id: string): Promise<void> => {
 
 // Toggle bookmark favorite status
 export const toggleBookmarkFavorite = async (id: string, isFavorite: boolean): Promise<Bookmark> => {
-  const response = await fetch(API_ENDPOINTS.BOOKMARK_BY_ID(id), {
+  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.BOOKMARK_BY_ID(id)), {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ isFavorite }),
@@ -197,7 +198,7 @@ export const toggleBookmarkFavorite = async (id: string, isFavorite: boolean): P
 
 // Get all categories
 export const getCategories = async (): Promise<Category[]> => {
-  const response = await fetch(API_ENDPOINTS.CATEGORIES, {
+  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.CATEGORIES), {
     credentials: "include", // Include credentials for authentication
     next: { tags: [CACHE_TAGS.CATEGORIES] },
   });
@@ -211,7 +212,7 @@ export const getCategories = async (): Promise<Category[]> => {
 
 // Get a single category
 export const getCategory = async (id: string): Promise<Category> => {
-  const response = await fetch(API_ENDPOINTS.CATEGORY_BY_ID(id), {
+  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.CATEGORY_BY_ID(id)), {
     credentials: "include", // Include credentials for authentication
     next: { tags: [CACHE_TAGS.CATEGORIES] },
   });
@@ -225,7 +226,7 @@ export const getCategory = async (id: string): Promise<Category> => {
 
 // Create a new category
 export const createCategory = async (data: CreateCategoryInput): Promise<Category> => {
-  const response = await fetch(API_ENDPOINTS.CATEGORIES, {
+  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.CATEGORIES), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -246,7 +247,7 @@ export const createCategory = async (data: CreateCategoryInput): Promise<Categor
 
 // Update an existing category
 export const updateCategory = async (id: string, data: Partial<CreateCategoryInput>): Promise<Category> => {
-  const response = await fetch(API_ENDPOINTS.CATEGORY_BY_ID(id), {
+  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.CATEGORY_BY_ID(id)), {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -267,7 +268,7 @@ export const updateCategory = async (id: string, data: Partial<CreateCategoryInp
 
 // Delete a category
 export const deleteCategory = async (id: string): Promise<void> => {
-  const response = await fetch(API_ENDPOINTS.CATEGORY_BY_ID(id), {
+  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.CATEGORY_BY_ID(id)), {
     method: "DELETE",
     credentials: "include", // Include credentials for authentication
   });
@@ -288,7 +289,7 @@ export const deleteCategory = async (id: string): Promise<void> => {
 
 // Get all tags
 export const getTags = async (): Promise<Tag[]> => {
-  const response = await fetch(API_ENDPOINTS.TAGS, {
+  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.TAGS), {
     credentials: "include", // Include credentials for authentication
     next: { tags: [CACHE_TAGS.TAGS] },
   });
@@ -302,7 +303,7 @@ export const getTags = async (): Promise<Tag[]> => {
 
 // Get a single tag
 export const getTag = async (id: string): Promise<Tag> => {
-  const response = await fetch(API_ENDPOINTS.TAG_BY_ID(id), {
+  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.TAG_BY_ID(id)), {
     credentials: "include", // Include credentials for authentication
     next: { tags: [CACHE_TAGS.TAGS] },
   });
@@ -316,7 +317,7 @@ export const getTag = async (id: string): Promise<Tag> => {
 
 // Create a new tag
 export const createTag = async (data: CreateTagInput): Promise<Tag> => {
-  const response = await fetch(API_ENDPOINTS.TAGS, {
+  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.TAGS), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -337,7 +338,7 @@ export const createTag = async (data: CreateTagInput): Promise<Tag> => {
 
 // Update an existing tag
 export const updateTag = async (id: string, data: Partial<CreateTagInput>): Promise<Tag> => {
-  const response = await fetch(API_ENDPOINTS.TAG_BY_ID(id), {
+  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.TAG_BY_ID(id)), {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -358,7 +359,7 @@ export const updateTag = async (id: string, data: Partial<CreateTagInput>): Prom
 
 // Delete a tag
 export const deleteTag = async (id: string): Promise<void> => {
-  const response = await fetch(API_ENDPOINTS.TAG_BY_ID(id), {
+  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.TAG_BY_ID(id)), {
     method: "DELETE",
     credentials: "include", // Include credentials for authentication
   });
@@ -379,7 +380,7 @@ export const deleteTag = async (id: string): Promise<void> => {
 
 // Get user settings
 export const getUserSettings = async (): Promise<UserSettings> => {
-  const response = await fetch(API_ENDPOINTS.USER_SETTINGS, {
+  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.USER_SETTINGS), {
     credentials: "include", // Include credentials for authentication
     next: { tags: [CACHE_TAGS.USER_SETTINGS] },
   });
@@ -393,7 +394,7 @@ export const getUserSettings = async (): Promise<UserSettings> => {
 
 // Update user settings
 export const updateUserSettings = async (data: UpdateUserSettingsInput): Promise<UserSettings> => {
-  const response = await fetch(API_ENDPOINTS.USER_SETTINGS, {
+  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.USER_SETTINGS), {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -416,7 +417,7 @@ export const updateUserSettings = async (data: UpdateUserSettingsInput): Promise
 
 // Rebuild the search index for the authenticated user
 export const rebuildSearchIndex = async (): Promise<{ success: boolean; count: number; message: string }> => {
-  const response = await fetch(API_ENDPOINTS.REBUILD_SEARCH_INDEX, {
+  const response = await fetch(getAbsoluteUrl(API_ENDPOINTS.REBUILD_SEARCH_INDEX), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
