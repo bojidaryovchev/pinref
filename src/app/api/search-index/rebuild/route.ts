@@ -1,12 +1,12 @@
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/auth";
 import { rebuildSearchIndex } from "@/lib/dynamodb";
-import { getServerSession } from "next-auth";
+
 import { NextResponse } from "next/server";
 
 export async function POST() {
   try {
     // Authenticate the request
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -28,3 +28,4 @@ export async function POST() {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+

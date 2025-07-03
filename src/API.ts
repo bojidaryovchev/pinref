@@ -6,8 +6,11 @@
  */
 
 import { revalidateTag } from "next/cache";
+import { auth } from "./auth";
 import { API_ENDPOINTS, CACHE_TAGS } from "./constants";
 import { getAbsoluteUrl } from "./lib/env";
+import { getUserBookmarks, searchBookmarks } from "./lib/dynamodb";
+import { generateQueryTokens } from "./lib/metadata";
 import { Bookmark, BookmarkQueryOptions, CreateBookmarkInput } from "./schemas/bookmark.schema";
 import { Category, CreateCategoryInput } from "./schemas/category.schema";
 import { CreateTagInput, Tag } from "./schemas/tag.schema";
@@ -30,6 +33,10 @@ async function resilientFetch<T>(url: string, options: RequestInit = {}): Promis
       credentials: "include", // Always include credentials
     };
 
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[resilientFetch] Fetching URL: ${url} with credentials: ${fetchOptions.credentials}`);
+    }
+
     // First try with the provided URL
     const response = await fetch(url, fetchOptions);
     
@@ -37,6 +44,15 @@ async function resilientFetch<T>(url: string, options: RequestInit = {}): Promis
       // Special handling for authentication errors
       if (response.status === 401) {
         console.error(`[resilientFetch] Authentication error (401) for URL: ${url}`);
+        
+        // Check for common auth issues
+        try {
+          const errorData = await response.json().catch(() => ({}));
+          console.error(`[resilientFetch] Response data:`, errorData);
+        } catch (parseError) {
+          console.error(`[resilientFetch] Could not parse response:`, parseError);
+        }
+        
         throw new Error("Authentication failed - Please log in again");
       }
       
@@ -158,15 +174,9 @@ export const getBookmarks = async (
 
   // First try direct import from server components
   try {
-    // Import server-side functions directly
+    // Use direct server-side functions
     // This approach avoids the need for fetch and authentication issues
-    const { getUserBookmarks, searchBookmarks } = await import('./lib/dynamodb');
-    const { getServerSession } = await import('next-auth');
-    const { authOptions } = await import('./lib/auth');
-    const { generateQueryTokens } = await import('./lib/metadata');
-    
-    // Get the session
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     
     if (!session?.user?.email) {
       throw new Error("Authentication required");

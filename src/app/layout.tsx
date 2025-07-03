@@ -1,3 +1,4 @@
+import AuthProviders from "@/components/auth-providers";
 import Providers from "@/components/providers";
 import { SITE_DESCRIPTION, SITE_TITLE } from "@/constants";
 import type { Metadata } from "next";
@@ -26,7 +27,9 @@ const RootLayout: React.FC<PropsWithChildren> = ({ children }) => {
     <>
       <html lang="en">
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-          <Providers>{children}</Providers>
+          <AuthProviders>
+            <Providers>{children}</Providers>
+          </AuthProviders>
         </body>
       </html>
     </>

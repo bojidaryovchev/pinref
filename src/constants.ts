@@ -9,6 +9,10 @@ export const CONTACT_EMAIL = "support@pinref.com";
 export const SITE_TITLE = "Pinref - Visual Bookmark Manager";
 export const SITE_DESCRIPTION = "A modern visual bookmark manager with categories, tags, and smart search";
 
+/** Default theme and sidebar settings */
+export const DEFAULT_THEME = "system";
+export const DEFAULT_SIDEBAR_EXPANDED = true;
+
 /** Toaster config */
 export const TOASTER_DURATION_MS = 6000;
 

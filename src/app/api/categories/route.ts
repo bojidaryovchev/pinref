@@ -1,15 +1,15 @@
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/auth";
 import { createCategory, getUserCategories } from "@/lib/dynamodb";
 import { encryptCategoryData } from "@/lib/encryption";
 import { createCategorySchema } from "@/schemas/category.schema";
-import { getServerSession } from "next-auth";
+
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -31,7 +31,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -61,3 +61,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+

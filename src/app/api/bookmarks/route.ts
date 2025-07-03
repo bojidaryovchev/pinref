@@ -1,17 +1,16 @@
 import { SEARCH_RESULTS_LIMIT } from "@/constants";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/auth";
 import { createBookmark, getUserBookmarks, searchBookmarks } from "@/lib/dynamodb";
 import { decryptBookmarkData, encryptBookmarkData } from "@/lib/encryption";
 import { extractMetadata, generateQueryTokens, generateSearchTokens } from "@/lib/metadata";
 import { createBookmarkSchema } from "@/schemas/bookmark.schema";
-import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import { ZodError } from "zod";
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -91,7 +90,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
