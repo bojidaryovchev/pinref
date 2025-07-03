@@ -550,10 +550,13 @@ export const searchBookmarks = async (userId: string, searchTokens: string[]): P
     const params: DynamoDBParams = {
       TableName: TABLE_NAME,
       IndexName: "InvertedIndex",
-      KeyConditionExpression: "userId = :userId AND begins_with(token, :token)",
+      KeyConditionExpression: "userId = :userId AND begins_with(#token, :token)",
       ExpressionAttributeValues: {
         ":userId": userId,
         ":token": token.toLowerCase(),
+      },
+      ExpressionAttributeNames: {
+        "#token": "token", // Escape reserved keyword
       },
       ProjectionExpression: "bookmarkId", // Only return bookmark IDs
     };
