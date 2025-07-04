@@ -201,11 +201,11 @@ export function encryptSync(text: string): string {
   const key = Array.from(ENCRYPTION_KEY).map((char) => char.charCodeAt(0));
   const textBytes = encoder.encode(text);
   const resultBytes = new Uint8Array(textBytes.length);
-  
+
   for (let i = 0; i < textBytes.length; i++) {
     resultBytes[i] = textBytes[i] ^ key[i % key.length];
   }
-  
+
   // Convert to hex string instead of using btoa to avoid Unicode issues
   return bytesToHex(resultBytes);
 }
@@ -216,11 +216,11 @@ export function decryptSync(encryptedData: string): string {
     const key = Array.from(ENCRYPTION_KEY).map((char) => char.charCodeAt(0));
     const encryptedBytes = hexToBytes(encryptedData);
     const resultBytes = new Uint8Array(encryptedBytes.length);
-    
+
     for (let i = 0; i < encryptedBytes.length; i++) {
       resultBytes[i] = encryptedBytes[i] ^ key[i % key.length];
     }
-    
+
     // Convert bytes back to string
     return decoder.decode(resultBytes);
   } catch (error) {
@@ -231,13 +231,13 @@ export function decryptSync(encryptedData: string): string {
 
 // Utility functions for encrypting specific data types
 // Using synchronous versions for backward compatibility
-export function encryptBookmarkData(data: { 
-  url: string; 
-  title?: string; 
-  description?: string; 
-  image?: string; 
-  favicon?: string; 
-  domain?: string; 
+export function encryptBookmarkData(data: {
+  url: string;
+  title?: string;
+  description?: string;
+  image?: string;
+  favicon?: string;
+  domain?: string;
 }) {
   return {
     url: encryptSync(data.url),
@@ -249,13 +249,13 @@ export function encryptBookmarkData(data: {
   };
 }
 
-export function decryptBookmarkData(encryptedData: { 
-  url: string; 
-  title?: string; 
-  description?: string; 
-  image?: string; 
-  favicon?: string; 
-  domain?: string; 
+export function decryptBookmarkData(encryptedData: {
+  url: string;
+  title?: string;
+  description?: string;
+  image?: string;
+  favicon?: string;
+  domain?: string;
 }) {
   return {
     url: decryptSync(encryptedData.url),

@@ -46,7 +46,7 @@ const EditBookmarkDialog: React.FC<Props> = ({ bookmark, open, onOpenChange, cat
       form.reset({
         title: bookmark.title || "",
         description: bookmark.description || "",
-        categoryId: bookmark.categoryId || "",
+        categoryId: bookmark.categoryId || "none",
         tagIds: bookmark.tagIds || [],
         isFavorite: bookmark.isFavorite || false,
       });
@@ -59,7 +59,14 @@ const EditBookmarkDialog: React.FC<Props> = ({ bookmark, open, onOpenChange, cat
 
     try {
       setIsLoading(true);
-      await updateBookmark(bookmark.id, data);
+      
+      // Convert "none" categoryId to undefined
+      const updateData = {
+        ...data,
+        categoryId: data.categoryId === "none" ? undefined : data.categoryId
+      };
+      
+      await updateBookmark(bookmark.id, updateData);
       toast.success("Bookmark updated successfully");
       onOpenChange(false);
     } catch (error) {
@@ -130,7 +137,7 @@ const EditBookmarkDialog: React.FC<Props> = ({ bookmark, open, onOpenChange, cat
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">No Category</SelectItem>
+                      <SelectItem value="none">No Category</SelectItem>
                       {categories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.icon && <span className="mr-2">{category.icon}</span>}

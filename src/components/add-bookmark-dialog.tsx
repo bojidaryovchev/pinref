@@ -37,7 +37,7 @@ const AddBookmarkDialog: React.FC<Props> = ({ categories, tags }) => {
     resolver: zodResolver(createBookmarkSchema),
     defaultValues: {
       url: "",
-      categoryId: "",
+      categoryId: "none",
       tagIds: [],
     },
   });
@@ -47,7 +47,7 @@ const AddBookmarkDialog: React.FC<Props> = ({ categories, tags }) => {
     if (!open) {
       form.reset({
         url: "",
-        categoryId: "",
+        categoryId: "none",
         tagIds: [],
       });
     }
@@ -61,8 +61,15 @@ const AddBookmarkDialog: React.FC<Props> = ({ categories, tags }) => {
       // Extract metadata on the client side to avoid German content
       const metadata = await extractMetadataClient(data.url);
 
+      // Convert "none" categoryId to undefined
+      const bookmarkData = {
+        ...data,
+        categoryId: data.categoryId === "none" ? undefined : data.categoryId,
+        metadata
+      };
+
       // Add bookmark with metadata included in the data object
-      await addBookmark({ ...data, metadata });
+      await addBookmark(bookmarkData);
 
       toast.success("Bookmark added successfully");
       setOpen(false);
@@ -129,7 +136,7 @@ const AddBookmarkDialog: React.FC<Props> = ({ categories, tags }) => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">No Category</SelectItem>
+                        <SelectItem value="none">No Category</SelectItem>
                         {categories.map((category) => (
                           <SelectItem key={category.id} value={category.id}>
                             {category.icon && <span className="mr-2">{category.icon}</span>}
