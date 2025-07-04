@@ -34,7 +34,7 @@ export function useBookmarks(options: BookmarkQueryOptions = { limit: 20 }) {
   if (options.categoryId) params.append("category", options.categoryId);
   if (options.tagId) params.append("tag", options.tagId);
   if (options.isFavorite) params.append("favorite", "true");
-  if (options.query) params.append("q", options.query);
+  if (options.query && options.query.trim()) params.append("q", options.query.trim());
 
   const queryString = params.toString();
   const url = `/api/bookmarks${queryString ? `?${queryString}` : ""}`;
@@ -52,6 +52,10 @@ export function useBookmarks(options: BookmarkQueryOptions = { limit: 20 }) {
     revalidateOnFocus: SWR_CONFIG.REVALIDATE_ON_FOCUS,
     revalidateOnReconnect: SWR_CONFIG.REVALIDATE_ON_RECONNECT,
     dedupingInterval: SWR_CONFIG.DEDUPING_INTERVAL,
+    // Don't revalidate on mount if we have cached data
+    revalidateIfStale: false,
+    // Keep previous data when key changes (prevents flickering)
+    keepPreviousData: true,
   });
 
   // Helper function to refresh data

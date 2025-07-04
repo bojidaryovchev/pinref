@@ -6,7 +6,7 @@ import { PLACEHOLDERS, SEARCH_DEBOUNCE_MS } from "@/constants";
 import { cn } from "@/lib/utils";
 import { Search, X } from "lucide-react";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface Props {
   onSearch: (query: string) => void;
@@ -16,19 +16,38 @@ interface Props {
 
 const SearchBar: React.FC<Props> = ({ onSearch, placeholder = PLACEHOLDERS.SEARCH_BOOKMARKS, className }) => {
   const [query, setQuery] = useState("");
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      onSearch(query);
+  // Debounced search function
+  const debouncedSearch = useCallback((searchQuery: string) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    timeoutRef.current = setTimeout(() => {
+      onSearch(searchQuery);
     }, SEARCH_DEBOUNCE_MS);
+  }, [onSearch]);
 
-    return () => clearTimeout(timeoutId);
-  }, [query, onSearch]);
+  // Effect to trigger search when query changes
+  useEffect(() => {
+    debouncedSearch(query);
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [query, debouncedSearch]);
 
-  const handleClear = () => {
+  const handleClear = useCallback(() => {
     setQuery("");
-    onSearch("");
-  };
+  }, []);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
+  }, []);
 
   return (
     <div className={cn("relative flex items-center", className)}>
@@ -37,7 +56,7 @@ const SearchBar: React.FC<Props> = ({ onSearch, placeholder = PLACEHOLDERS.SEARC
         type="text"
         placeholder={placeholder}
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={handleInputChange}
         className="pr-9 pl-9"
       />
       {query && (

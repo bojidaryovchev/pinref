@@ -53,39 +53,58 @@ export async function extractMetadata(url: string): Promise<UrlMetadata> {
       if (response.ok) {
         const html = await response.text();
         
-        // Parse HTML to extract metadata using simple regex (works in Node.js)
+        // Parse HTML to extract metadata using improved regex patterns
         const extractMeta = (pattern: RegExp): string | undefined => {
           const match = html.match(pattern);
-          return match ? match[1].trim() : undefined;
+          if (match && match[1]) {
+            // Decode HTML entities
+            return match[1]
+              .replace(/&quot;/g, '"')
+              .replace(/&apos;/g, "'")
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>')
+              .replace(/&amp;/g, '&')
+              .trim();
+          }
+          return undefined;
         };
 
-        // Extract title
+        // Extract title with better patterns for YouTube and other sites
         const title =
-          extractMeta(/<meta\s+property="og:title"\s+content="([^"]*)"[^>]*>/i) ||
-          extractMeta(/<meta\s+name="twitter:title"\s+content="([^"]*)"[^>]*>/i) ||
+          extractMeta(/<meta\s+property=["']og:title["']\s+content=["']([^"']*?)["'][^>]*>/i) ||
+          extractMeta(/<meta\s+name=["']twitter:title["']\s+content=["']([^"']*?)["'][^>]*>/i) ||
+          extractMeta(/<meta\s+property=["']twitter:title["']\s+content=["']([^"']*?)["'][^>]*>/i) ||
+          extractMeta(/<meta\s+name=["']title["']\s+content=["']([^"']*?)["'][^>]*>/i) ||
           extractMeta(/<title[^>]*>([^<]+)<\/title>/i) ||
           metadata.title;
 
-        // Extract description
+        // Extract description with better patterns
         const description =
-          extractMeta(/<meta\s+property="og:description"\s+content="([^"]*)"[^>]*>/i) ||
-          extractMeta(/<meta\s+name="twitter:description"\s+content="([^"]*)"[^>]*>/i) ||
-          extractMeta(/<meta\s+name="description"\s+content="([^"]*)"[^>]*>/i);
+          extractMeta(/<meta\s+property=["']og:description["']\s+content=["']([^"']*?)["'][^>]*>/i) ||
+          extractMeta(/<meta\s+name=["']twitter:description["']\s+content=["']([^"']*?)["'][^>]*>/i) ||
+          extractMeta(/<meta\s+property=["']twitter:description["']\s+content=["']([^"']*?)["'][^>]*>/i) ||
+          extractMeta(/<meta\s+name=["']description["']\s+content=["']([^"']*?)["'][^>]*>/i) ||
+          extractMeta(/<meta\s+itemprop=["']description["']\s+content=["']([^"']*?)["'][^>]*>/i);
 
-        // Extract image
+        // Extract image with better patterns for YouTube and other sites
         let image =
-          extractMeta(/<meta\s+property="og:image"\s+content="([^"]*)"[^>]*>/i) ||
-          extractMeta(/<meta\s+name="twitter:image"\s+content="([^"]*)"[^>]*>/i);
+          extractMeta(/<meta\s+property=["']og:image["']\s+content=["']([^"']*?)["'][^>]*>/i) ||
+          extractMeta(/<meta\s+name=["']twitter:image["']\s+content=["']([^"']*?)["'][^>]*>/i) ||
+          extractMeta(/<meta\s+property=["']twitter:image["']\s+content=["']([^"']*?)["'][^>]*>/i) ||
+          extractMeta(/<meta\s+itemprop=["']image["']\s+content=["']([^"']*?)["'][^>]*>/i) ||
+          extractMeta(/<meta\s+name=["']thumbnail["']\s+content=["']([^"']*?)["'][^>]*>/i);
 
         // Make image URL absolute if it's relative
         if (image && !image.startsWith("http")) {
           image = new URL(image, url).href;
         }
 
-        // Extract favicon
+        // Extract favicon with better patterns  
         let favicon =
-          extractMeta(/<link\s+rel="icon"\s+href="([^"]*)"[^>]*>/i) ||
-          extractMeta(/<link\s+rel="shortcut icon"\s+href="([^"]*)"[^>]*>/i) ||
+          extractMeta(/<link\s+rel=["']icon["']\s+href=["']([^"']*?)["'][^>]*>/i) ||
+          extractMeta(/<link\s+rel=["']shortcut icon["']\s+href=["']([^"']*?)["'][^>]*>/i) ||
+          extractMeta(/<link\s+rel=["']apple-touch-icon["']\s+href=["']([^"']*?)["'][^>]*>/i) ||
+          extractMeta(/<link\s+rel=["']mask-icon["']\s+href=["']([^"']*?)["'][^>]*>/i) ||
           metadata.favicon;
 
         // Make favicon URL absolute if it's relative
