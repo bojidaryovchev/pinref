@@ -199,25 +199,30 @@ export function encryptSync(text: string): string {
   // Simple XOR encryption with a key derived from ENCRYPTION_KEY
   // This is a simplified fallback and should be replaced with proper async implementation
   const key = Array.from(ENCRYPTION_KEY).map((char) => char.charCodeAt(0));
-  let result = "";
-  for (let i = 0; i < text.length; i++) {
-    const charCode = text.charCodeAt(i) ^ key[i % key.length];
-    result += String.fromCharCode(charCode);
+  const textBytes = encoder.encode(text);
+  const resultBytes = new Uint8Array(textBytes.length);
+  
+  for (let i = 0; i < textBytes.length; i++) {
+    resultBytes[i] = textBytes[i] ^ key[i % key.length];
   }
-  return btoa(result);
+  
+  // Convert to hex string instead of using btoa to avoid Unicode issues
+  return bytesToHex(resultBytes);
 }
 
 export function decryptSync(encryptedData: string): string {
   try {
     // Simple XOR decryption with a key derived from ENCRYPTION_KEY
     const key = Array.from(ENCRYPTION_KEY).map((char) => char.charCodeAt(0));
-    const encText = atob(encryptedData);
-    let result = "";
-    for (let i = 0; i < encText.length; i++) {
-      const charCode = encText.charCodeAt(i) ^ key[i % key.length];
-      result += String.fromCharCode(charCode);
+    const encryptedBytes = hexToBytes(encryptedData);
+    const resultBytes = new Uint8Array(encryptedBytes.length);
+    
+    for (let i = 0; i < encryptedBytes.length; i++) {
+      resultBytes[i] = encryptedBytes[i] ^ key[i % key.length];
     }
-    return result;
+    
+    // Convert bytes back to string
+    return decoder.decode(resultBytes);
   } catch (error) {
     console.error("Sync decryption error:", error);
     return "DECRYPTION_ERROR";
@@ -226,19 +231,39 @@ export function decryptSync(encryptedData: string): string {
 
 // Utility functions for encrypting specific data types
 // Using synchronous versions for backward compatibility
-export function encryptBookmarkData(data: { url: string; title?: string; description?: string }) {
+export function encryptBookmarkData(data: { 
+  url: string; 
+  title?: string; 
+  description?: string; 
+  image?: string; 
+  favicon?: string; 
+  domain?: string; 
+}) {
   return {
     url: encryptSync(data.url),
     title: data.title ? encryptSync(data.title) : undefined,
     description: data.description ? encryptSync(data.description) : undefined,
+    image: data.image ? encryptSync(data.image) : undefined,
+    favicon: data.favicon ? encryptSync(data.favicon) : undefined,
+    domain: data.domain ? encryptSync(data.domain) : undefined,
   };
 }
 
-export function decryptBookmarkData(encryptedData: { url: string; title?: string; description?: string }) {
+export function decryptBookmarkData(encryptedData: { 
+  url: string; 
+  title?: string; 
+  description?: string; 
+  image?: string; 
+  favicon?: string; 
+  domain?: string; 
+}) {
   return {
     url: decryptSync(encryptedData.url),
     title: encryptedData.title ? decryptSync(encryptedData.title) : undefined,
     description: encryptedData.description ? decryptSync(encryptedData.description) : undefined,
+    image: encryptedData.image ? decryptSync(encryptedData.image) : undefined,
+    favicon: encryptedData.favicon ? decryptSync(encryptedData.favicon) : undefined,
+    domain: encryptedData.domain ? decryptSync(encryptedData.domain) : undefined,
   };
 }
 
