@@ -3,19 +3,18 @@
  */
 
 import {
-  createBookmark,
-  createCategory,
-  createTag,
-  deleteBookmark,
-  deleteCategory,
-  deleteTag,
-  rebuildSearchIndex,
-  toggleBookmarkFavorite,
-  updateBookmark,
-  updateCategory,
-  updateTag,
-  updateUserSettings,
-} from "@/API";
+  createBookmarkAction,
+  createCategoryAction,
+  createTagAction,
+  deleteBookmarkAction,
+  deleteCategoryAction,
+  deleteTagAction,
+  rebuildSearchIndexAction,
+  updateBookmarkAction,
+  updateCategoryAction,
+  updateTagAction,
+  updateUserSettingsAction,
+} from "@/actions";
 import { SWR_CONFIG } from "@/constants";
 import type { Bookmark, BookmarkQueryOptions, CreateBookmarkInput } from "@/schemas/bookmark.schema";
 import type { Category, CreateCategoryInput } from "@/schemas/category.schema";
@@ -62,29 +61,27 @@ export function useBookmarks(options: BookmarkQueryOptions = { limit: 20 }) {
 
   // Helper function to add a new bookmark
   const addBookmark = async (bookmarkData: CreateBookmarkInput): Promise<Bookmark> => {
-    const newBookmark = await createBookmark(bookmarkData);
+    const result = await createBookmarkAction(bookmarkData);
     await mutate();
-    return newBookmark;
+    return result.bookmark;
   };
 
   // Helper function to update a bookmark
-  const updateBookmarkItem = async (id: string, bookmarkData: Partial<CreateBookmarkInput>): Promise<Bookmark> => {
-    const updatedBookmark = await updateBookmark(id, bookmarkData);
+  const updateBookmarkItem = async (id: string, bookmarkData: Partial<CreateBookmarkInput>): Promise<void> => {
+    await updateBookmarkAction(id, bookmarkData);
     await mutate();
-    return updatedBookmark;
   };
 
   // Helper function to delete a bookmark
   const removeBookmark = async (id: string): Promise<void> => {
-    await deleteBookmark(id);
+    await deleteBookmarkAction(id);
     await mutate();
   };
 
   // Helper function to toggle favorite status
-  const toggleFavorite = async (id: string, isFavorite: boolean): Promise<Bookmark> => {
-    const updatedBookmark = await toggleBookmarkFavorite(id, isFavorite);
+  const toggleFavorite = async (id: string, isFavorite: boolean): Promise<void> => {
+    await updateBookmarkAction(id, { isFavorite });
     await mutate();
-    return updatedBookmark;
   };
 
   return {
@@ -118,21 +115,20 @@ export function useCategories() {
 
   // Helper function to add a new category
   const addCategory = async (categoryData: CreateCategoryInput): Promise<Category> => {
-    const newCategory = await createCategory(categoryData);
+    const result = await createCategoryAction(categoryData);
     await mutate();
-    return newCategory;
+    return result.category;
   };
 
   // Helper function to update a category
-  const updateCategoryItem = async (id: string, categoryData: Partial<CreateCategoryInput>): Promise<Category> => {
-    const updatedCategory = await updateCategory(id, categoryData);
+  const updateCategoryItem = async (id: string, categoryData: Partial<CreateCategoryInput>): Promise<void> => {
+    await updateCategoryAction(id, categoryData);
     await mutate();
-    return updatedCategory;
   };
 
   // Helper function to delete a category
   const removeCategory = async (id: string): Promise<void> => {
-    await deleteCategory(id);
+    await deleteCategoryAction(id);
     await mutate();
   };
 
@@ -165,21 +161,20 @@ export function useTags() {
 
   // Helper function to add a new tag
   const addTag = async (tagData: CreateTagInput): Promise<Tag> => {
-    const newTag = await createTag(tagData);
+    const result = await createTagAction(tagData);
     await mutate();
-    return newTag;
+    return result.tag;
   };
 
   // Helper function to update a tag
-  const updateTagItem = async (id: string, tagData: Partial<CreateTagInput>): Promise<Tag> => {
-    const updatedTag = await updateTag(id, tagData);
+  const updateTagItem = async (id: string, tagData: Partial<CreateTagInput>): Promise<void> => {
+    await updateTagAction(id, tagData);
     await mutate();
-    return updatedTag;
   };
 
   // Helper function to delete a tag
   const removeTag = async (id: string): Promise<void> => {
-    await deleteTag(id);
+    await deleteTagAction(id);
     await mutate();
   };
 
@@ -211,10 +206,9 @@ export function useUserSettings() {
   };
 
   // Helper function to update settings
-  const updateSettings = async (settingsData: UpdateUserSettingsInput): Promise<UserSettings> => {
-    const updatedSettings = await updateUserSettings(settingsData);
+  const updateSettings = async (settingsData: UpdateUserSettingsInput): Promise<void> => {
+    await updateUserSettingsAction(settingsData);
     await mutate();
-    return updatedSettings;
   };
 
   return {
@@ -246,7 +240,7 @@ export function useRebuildSearchIndex() {
       mutate(undefined, false);
 
       // Call the API
-      const result = await rebuildSearchIndex();
+      const result = await rebuildSearchIndexAction();
 
       // Update with the result
       mutate(result, false);

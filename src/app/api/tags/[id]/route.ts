@@ -1,6 +1,6 @@
-import { auth } from "@/auth";
-import { deleteTag, getTagById, updateTag } from "@/lib/dynamodb";
-import { decryptTagData, encryptTagData } from "@/lib/encryption";
+import { deleteTagAction, updateTagAction } from "@/actions";
+import { getTagById } from "@/lib/dynamodb";
+import { decryptTagData } from "@/lib/encryption";
 import { updateTagSchema } from "@/schemas/tag.schema";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -8,29 +8,20 @@ import { z } from "zod";
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const tag = await getTagById(id);
 
     if (!tag) {
       return NextResponse.json({ error: "Tag not found" }, { status: 404 });
     }
 
-    // Verify the tag belongs to the current user
-    const tagData = tag as { userId?: string; name?: string };
-    if (tagData.userId !== session.user.email) {
-      return NextResponse.json({ error: "Tag not found" }, { status: 404 });
-    }
-
     // Decrypt sensitive data before returning
+    const tagData = tag as { name?: string };
     if (tagData.name) {
-      tagData.name = decryptTagData({ name: tagData.name }).name;
+      const decryptedData = decryptTagData({ name: tagData.name });
+      return NextResponse.json({ ...tag, ...decryptedData });
     }
 
-    return NextResponse.json(tagData);
+    return NextResponse.json(tag);
   } catch (error) {
     console.error("Error fetching tag:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -40,49 +31,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Check if the tag exists and belongs to the current user
-    const existingTag = await getTagById(id);
-    if (!existingTag) {
-      return NextResponse.json({ error: "Tag not found" }, { status: 404 });
-    }
-
-    const tagData = existingTag as { userId?: string };
-    if (tagData.userId !== session.user.email) {
-      return NextResponse.json({ error: "Tag not found" }, { status: 404 });
-    }
-
     const body = await request.json();
     const updateData = updateTagSchema.parse(body);
 
-    // Encrypt sensitive data if name is being updated
-    const processedData = updateData.name
-      ? { ...updateData, name: encryptTagData({ name: updateData.name }).name }
-      : updateData;
-
-    const updatedTag = await updateTag(id, processedData);
-
-    // Decrypt name before returning response
-    const responseData = { ...updatedTag } as { name?: string };
-    if (responseData.name) {
-      responseData.name = decryptTagData({ name: responseData.name }).name;
-    }
-
-    return NextResponse.json(responseData);
+    await updateTagAction(id, updateData);
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error updating tag:", error);
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: "Invalid request data",
-          details: error.errors,
-        },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Invalid request data" }, { status: 400 });
     }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -91,24 +48,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Check if the tag exists and belongs to the current user
-    const existingTag = await getTagById(id);
-    if (!existingTag) {
-      return NextResponse.json({ error: "Tag not found" }, { status: 404 });
-    }
-
-    const tagData = existingTag as { userId?: string };
-    if (tagData.userId !== session.user.email) {
-      return NextResponse.json({ error: "Tag not found" }, { status: 404 });
-    }
-
-    await deleteTag(id);
-
+    await deleteTagAction(id);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting tag:", error);

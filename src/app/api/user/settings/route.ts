@@ -1,5 +1,5 @@
-import { auth } from "@/auth";
-import { getUserSettings, updateUserSettings } from "@/lib/dynamodb";
+import { fetchUserSettingsData } from "@/API";
+import { updateUserSettingsAction } from "@/actions";
 import { updateUserSettingsSchema } from "@/schemas/user-settings.schema";
 
 import { NextRequest, NextResponse } from "next/server";
@@ -11,23 +11,7 @@ import { z } from "zod";
  */
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Get the user settings
-    const settings = await getUserSettings(session.user.email);
-
-    // If settings don't exist, return defaults
-    if (!settings) {
-      return NextResponse.json({
-        theme: "system",
-        defaultView: "grid",
-        bookmarksPerPage: 20,
-      });
-    }
-
+    const settings = await fetchUserSettingsData();
     return NextResponse.json(settings);
   } catch (error) {
     console.error("Error fetching user settings:", error);
@@ -41,18 +25,11 @@ export async function GET() {
  */
 export async function PUT(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const body = await request.json();
     const updateData = updateUserSettingsSchema.parse(body);
 
-    // Update the settings
-    const updatedSettings = await updateUserSettings(session.user.email, updateData);
-
-    return NextResponse.json(updatedSettings);
+    const result = await updateUserSettingsAction(updateData);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error updating user settings:", error);
     if (error instanceof z.ZodError) {

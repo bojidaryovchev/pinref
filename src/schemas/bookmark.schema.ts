@@ -8,8 +8,11 @@ import { z } from "zod";
  */
 export const createBookmarkSchema = z.object({
   url: z.string().url("Please enter a valid URL"),
+  title: z.string().optional(),
+  description: z.string().optional(),
   categoryId: z.string().optional(),
   tagIds: z.array(z.string()).optional(),
+  isFavorite: z.boolean().optional(),
 });
 
 export type CreateBookmarkInput = z.infer<typeof createBookmarkSchema>;
