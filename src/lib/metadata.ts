@@ -43,72 +43,103 @@ export async function extractMetadataClient(url: string): Promise<UrlMetadata> {
       metadata.title = domain.replace(/^www\./, "");
     }
 
-    // Try to enhance with actual page metadata using a CORS proxy
+    // Try to enhance with actual page metadata using multiple CORS proxy services
     try {
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+      // List of CORS proxy services to try as fallbacks
+      const corsProxies = [
+        `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+        `https://corsproxy.io/?${encodeURIComponent(url)}`,
+        `https://cors-anywhere.herokuapp.com/${url}`,
+        `https://thingproxy.freeboard.io/fetch/${url}`,
+      ];
 
-      const response = await fetch(proxyUrl, {
-        headers: {
-          "Accept-Language": "en-US,en;q=0.9",
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        },
-      });
+      let html = null;
 
-      if (response.ok) {
-        const data = await response.json();
-        const html = data.contents;
+      // Try each CORS proxy service
+      for (const proxyUrl of corsProxies) {
+        try {
+          const response = await fetch(proxyUrl, {
+            headers: {
+              "Accept-Language": "en-US,en;q=0.9",
+              "User-Agent":
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            },
+            // Add timeout to prevent hanging
+            signal: AbortSignal.timeout(10000), // 10 second timeout
+          });
 
-        if (html) {
-          // Parse HTML to extract metadata
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, "text/html");
+          if (response.ok) {
+            const data = await response.json();
+            
+            // Handle different proxy response formats
+            if (proxyUrl.includes('allorigins.win')) {
+              html = data.contents;
+            } else if (proxyUrl.includes('corsproxy.io')) {
+              html = data;
+            } else {
+              html = data;
+            }
 
-          // Extract title
-          const title =
-            doc.querySelector('meta[property="og:title"]')?.getAttribute("content") ||
-            doc.querySelector('meta[name="twitter:title"]')?.getAttribute("content") ||
-            doc.querySelector("title")?.textContent ||
-            metadata.title;
-
-          // Extract description
-          const description =
-            doc.querySelector('meta[property="og:description"]')?.getAttribute("content") ||
-            doc.querySelector('meta[name="twitter:description"]')?.getAttribute("content") ||
-            doc.querySelector('meta[name="description"]')?.getAttribute("content");
-
-          // Extract image
-          let image =
-            doc.querySelector('meta[property="og:image"]')?.getAttribute("content") ||
-            doc.querySelector('meta[name="twitter:image"]')?.getAttribute("content");
-
-          // Make image URL absolute if it's relative
-          if (image && !image.startsWith("http")) {
-            image = new URL(image, url).href;
+            if (html) {
+              console.log(`Successfully fetched metadata using: ${proxyUrl}`);
+              break; // Success! Exit the loop
+            }
           }
-
-          // Extract favicon
-          let favicon =
-            doc.querySelector('link[rel="icon"]')?.getAttribute("href") ||
-            doc.querySelector('link[rel="shortcut icon"]')?.getAttribute("href") ||
-            metadata.favicon;
-
-          // Make favicon URL absolute if it's relative
-          if (favicon && !favicon.startsWith("http")) {
-            favicon = new URL(favicon, url).href;
-          }
-
-          return {
-            title: title?.trim() || metadata.title,
-            description: description?.trim(),
-            image: image || undefined,
-            favicon,
-            domain: metadata.domain,
-          };
+        } catch (proxyError) {
+          console.warn(`CORS proxy ${proxyUrl} failed:`, proxyError);
+          continue; // Try next proxy
         }
       }
+
+      if (html) {
+        // Parse HTML to extract metadata
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+
+        // Extract title
+        const title =
+          doc.querySelector('meta[property="og:title"]')?.getAttribute("content") ||
+          doc.querySelector('meta[name="twitter:title"]')?.getAttribute("content") ||
+          doc.querySelector("title")?.textContent ||
+          metadata.title;
+
+        // Extract description
+        const description =
+          doc.querySelector('meta[property="og:description"]')?.getAttribute("content") ||
+          doc.querySelector('meta[name="twitter:description"]')?.getAttribute("content") ||
+          doc.querySelector('meta[name="description"]')?.getAttribute("content");
+
+        // Extract image
+        let image =
+          doc.querySelector('meta[property="og:image"]')?.getAttribute("content") ||
+          doc.querySelector('meta[name="twitter:image"]')?.getAttribute("content");
+
+        // Make image URL absolute if it's relative
+        if (image && !image.startsWith("http")) {
+          image = new URL(image, url).href;
+        }
+
+        // Extract favicon
+        let favicon =
+          doc.querySelector('link[rel="icon"]')?.getAttribute("href") ||
+          doc.querySelector('link[rel="shortcut icon"]')?.getAttribute("href") ||
+          metadata.favicon;
+
+        // Make favicon URL absolute if it's relative
+        if (favicon && !favicon.startsWith("http")) {
+          favicon = new URL(favicon, url).href;
+        }
+
+        return {
+          title: title?.trim() || metadata.title,
+          description: description?.trim(),
+          image: image || undefined,
+          favicon,
+          domain: metadata.domain,
+        };
+      }
     } catch (proxyError) {
-      console.warn("CORS proxy failed, using basic metadata:", proxyError);
+      console.warn("All CORS proxies failed, using basic metadata:", proxyError);
     }
 
     return metadata;
