@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -9,238 +10,224 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { PLACEHOLDERS, PRESET_TAG_ICONS, TOAST_MESSAGES } from "@/constants";
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PRESET_ICONS } from "@/constants";
 import { useTags } from "@/hooks/use-api";
-import { createTagSchema, Tag } from "@/schemas/tag.schema";
-import { Edit, Hash, Plus, Tag as TagIcon, Trash2 } from "lucide-react";
+import { createTagSchema, type CreateTagInput, type Tag } from "@/schemas/tag.schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Edit, Hash, Plus, Trash2 } from "lucide-react";
+import type React from "react";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
 const TagManager: React.FC = () => {
-  const { tags, isLoading, error, addTag, updateTag, removeTag } = useTags();
-  const [editingTag, setEditingTag] = useState<Tag | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    icon: "🏷️",
-  });
-  const [formError, setFormError] = useState<string | null>(null);
+  const { tags, addTag, updateTag, removeTag } = useTags();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingTag, setEditingTag] = useState<Tag | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
-  const handleCreate = async () => {
-    setFormError(null);
-    const parsed = createTagSchema.safeParse(formData);
-    if (!parsed.success) {
-      setFormError(parsed.error.errors[0].message);
-      return;
+  const form = useForm<CreateTagInput>({
+    resolver: zodResolver(createTagSchema),
+    defaultValues: {
+      name: "",
+      icon: "🏷️",
+    },
+  });
+
+  // Reset form when dialog opens/closes or when editing changes
+  const resetForm = () => {
+    if (editingTag) {
+      form.reset({
+        name: editingTag.name,
+        icon: editingTag.icon || "🏷️",
+      });
+    } else {
+      form.reset({
+        name: "",
+        icon: "🏷️",
+      });
     }
-    setIsSubmitting(true);
-    try {
-      await addTag(parsed.data);
-      toast.success(TOAST_MESSAGES.TAG_CREATED);
-      setFormData({ name: "", icon: "🏷️" });
-      setIsCreating(false);
-    } catch (e) {
-      const err = e as Error;
-      toast.error(err.message || "Failed to create tag");
-    } finally {
-      setIsSubmitting(false);
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open) {
+      setEditingTag(null);
+      resetForm();
+    } else {
+      resetForm();
     }
   };
 
   const handleEdit = (tag: Tag) => {
     setEditingTag(tag);
-    setFormData({
-      name: tag.name,
-      icon: tag.icon || "🏷️",
-    });
-    setFormError(null);
+    setDialogOpen(true);
   };
 
-  const handleUpdate = async () => {
-    setFormError(null);
-    if (!editingTag) return;
-    const parsed = createTagSchema.safeParse(formData);
-    if (!parsed.success) {
-      setFormError(parsed.error.errors[0].message);
-      return;
-    }
-    setIsSubmitting(true);
+  const handleSubmit = async (data: CreateTagInput) => {
     try {
-      await updateTag(editingTag.id, parsed.data);
-      toast.success(TOAST_MESSAGES.TAG_UPDATED);
-      setEditingTag(null);
-      setFormData({ name: "", icon: "🏷️" });
-    } catch (e) {
-      const err = e as Error;
-      toast.error(err.message || "Failed to update tag");
+      setIsSubmitting(true);
+
+      if (editingTag) {
+        await updateTag(editingTag.id, data);
+        toast.success("Tag updated successfully");
+      } else {
+        await addTag(data);
+        toast.success("Tag created successfully");
+      }
+
+      handleDialogOpenChange(false);
+    } catch (error) {
+      console.error("Error saving tag:", error);
+      toast.error(editingTag ? "Failed to update tag" : "Failed to create tag");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async (tagId: string) => {
-    setIsSubmitting(true);
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this tag?")) return;
+
     try {
-      await removeTag(tagId);
-      toast.success(TOAST_MESSAGES.TAG_DELETED);
-    } catch (e) {
-      const err = e as Error;
-      toast.error(err.message || "Failed to delete tag");
+      setIsSubmitting(true);
+      await removeTag(id);
+      toast.success("Tag deleted successfully");
+    } catch (error) {
+      console.error("Error deleting tag:", error);
+      toast.error("Failed to delete tag");
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  const TagForm = () => (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="name">Tag Name</Label>
-        <Input
-          id="name"
-          value={formData.name}
-          onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-          placeholder={PLACEHOLDERS.TAG_NAME}
-          disabled={isSubmitting}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>Icon (Optional)</Label>
-        <div className="space-y-3">
-          <Input
-            value={formData.icon}
-            onChange={(e) => setFormData((prev) => ({ ...prev, icon: e.target.value }))}
-            placeholder={PLACEHOLDERS.TAG_ICON}
-            className="text-center text-lg"
-            disabled={isSubmitting}
-          />
-          <div className="grid grid-cols-10 gap-2">
-            {PRESET_TAG_ICONS.map((icon) => (
-              <Button
-                key={icon}
-                variant={formData.icon === icon ? "default" : "outline"}
-                size="sm"
-                className="h-8 w-8 p-0 text-lg"
-                onClick={() => setFormData((prev) => ({ ...prev, icon }))}
-                disabled={isSubmitting}
-              >
-                {icon}
-              </Button>
-            ))}
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setFormData((prev) => ({ ...prev, icon: "" }))}
-            className="w-full"
-            disabled={isSubmitting}
-          >
-            No Icon
-          </Button>
-        </div>
-      </div>
-      {formError && <div className="text-destructive text-sm">{formError}</div>}
-      <div className="flex justify-end gap-2">
-        <Button
-          variant="outline"
-          onClick={() => {
-            setIsCreating(false);
-            setEditingTag(null);
-            setFormData({ name: "", icon: "🏷️" });
-            setFormError(null);
-          }}
-          disabled={isSubmitting}
-        >
-          Cancel
-        </Button>
-        <Button onClick={editingTag ? handleUpdate : handleCreate} disabled={isSubmitting}>
-          {editingTag ? "Update" : "Create"} Tag
-        </Button>
-      </div>
-    </div>
-  );
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Tags</h3>
-        <Dialog open={isCreating} onOpenChange={setIsCreating}>
-          <DialogTrigger asChild>
-            <Button size="sm" className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Tag
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Tag</DialogTitle>
-              <DialogDescription>
-                Add a new tag to label your bookmarks. Icons are optional and can be any emoji.
-              </DialogDescription>
-            </DialogHeader>
-            <TagForm />
-          </DialogContent>
-        </Dialog>
-      </div>
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Hash className="h-5 w-5" />
+            Tags
+          </CardTitle>
+          <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Tag
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{editingTag ? "Edit Tag" : "Create New Tag"}</DialogTitle>
+                <DialogDescription>
+                  {editingTag ? "Update the tag details below." : "Add a new tag to organize your bookmarks."}
+                </DialogDescription>
+              </DialogHeader>
 
-      {isLoading && <div className="text-muted-foreground py-8 text-center">Loading tags...</div>}
-      {error && <div className="text-destructive py-8 text-center">Failed to load tags</div>}
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter tag name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-        {tags &&
-          tags.length > 0 &&
-          tags.map((tag: Tag) => (
-            <div key={tag.id} className="flex items-center justify-between rounded-lg border p-3">
-              <div className="flex items-center gap-2">
-                {tag.icon ? (
-                  <span className="text-lg">{tag.icon}</span>
-                ) : (
-                  <Hash className="text-muted-foreground h-4 w-4" />
-                )}
-                <div>
-                  <p className="font-medium">{tag.name}</p>
-                  <p className="text-muted-foreground text-sm">{tag._count?.bookmarks ?? 0} bookmarks</p>
+                  <FormField
+                    control={form.control}
+                    name="icon"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Icon</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select an icon" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {PRESET_ICONS.map((icon) => (
+                              <SelectItem key={icon} value={icon}>
+                                <span className="mr-2">{icon}</span>
+                                {icon}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => handleDialogOpenChange(false)}
+                      disabled={isSubmitting}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={isSubmitting}>
+                      {editingTag ? "Update" : "Create"} Tag
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-wrap gap-2">
+          {tags.length === 0 ? (
+            <p className="text-muted-foreground w-full py-4 text-center">No tags yet. Create one to get started!</p>
+          ) : (
+            tags.map((tag) => (
+              <div
+                key={tag.id}
+                className="border-border bg-card flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
+              >
+                <div className="flex items-center gap-2">
+                  <span>{tag.icon}</span>
+                  <span className="font-medium">{tag.name}</span>
+                  <span className="text-muted-foreground">({tag._count?.bookmarks || 0})</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEdit(tag)}
+                    disabled={isSubmitting}
+                    className="h-6 w-6 p-0"
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(tag.id)}
+                    disabled={isSubmitting}
+                    className="text-destructive hover:text-destructive h-6 w-6 p-0"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
                 </div>
               </div>
-              <div className="flex items-center gap-1">
-                <Dialog open={editingTag?.id === tag.id} onOpenChange={(open) => !open && setEditingTag(null)}>
-                  <DialogTrigger asChild>
-                    <Button variant="ghost" size="sm" onClick={() => handleEdit(tag)}>
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Edit Tag</DialogTitle>
-                      <DialogDescription>Update the tag name or icon.</DialogDescription>
-                    </DialogHeader>
-                    <TagForm />
-                  </DialogContent>
-                </Dialog>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDelete(tag.id)}
-                  className="text-destructive hover:text-destructive"
-                  disabled={isSubmitting}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-          ))}
-      </div>
-
-      {!isLoading && (!tags || tags.length === 0) && (
-        <div className="text-muted-foreground py-8 text-center">
-          <TagIcon className="mx-auto mb-4 h-12 w-12 opacity-50" />
-          <p>No tags yet. Create your first tag to get started!</p>
+            ))
+          )}
         </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

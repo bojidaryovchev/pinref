@@ -63,7 +63,14 @@ export const fetchBookmarksData = async (options: BookmarkQueryOptions) => {
   // Decrypt sensitive data before returning
   const decryptedBookmarks = bookmarks.map((bookmark: unknown) => {
     const bookmarkObj = bookmark as Record<string, unknown>;
-    if (bookmarkObj.url || bookmarkObj.title || bookmarkObj.description || bookmarkObj.image || bookmarkObj.favicon || bookmarkObj.domain) {
+    if (
+      bookmarkObj.url ||
+      bookmarkObj.title ||
+      bookmarkObj.description ||
+      bookmarkObj.image ||
+      bookmarkObj.favicon ||
+      bookmarkObj.domain
+    ) {
       const decryptedData = decryptBookmarkData({
         url: (bookmarkObj.url as string) || "",
         title: bookmarkObj.title as string,

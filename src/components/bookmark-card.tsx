@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import type { Bookmark } from "@/schemas/bookmark.schema";
 import { Edit, ExternalLink, Folder, Heart, Tag, Trash2 } from "lucide-react";
 import Image from "next/image";
-import { useState, memo } from "react";
+import { memo, useState } from "react";
 import toast from "react-hot-toast";
 
 interface Props {

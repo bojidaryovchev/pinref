@@ -1,24 +1,33 @@
 "use client";
 
 import BookmarkCard from "@/components/bookmark-card";
+import EditBookmarkDialog from "@/components/edit-bookmark-dialog";
 import SearchBar from "@/components/search-bar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useBookmarks } from "@/hooks/use-api";
-import { useState, useCallback, useMemo } from "react";
+import { useBookmarks, useCategories, useTags } from "@/hooks/use-api";
+import type { Bookmark } from "@/schemas/bookmark.schema";
+import { useCallback, useMemo, useState } from "react";
 
 export default function BookmarksPage() {
   // Search state
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
 
-  // SWR hook for bookmarks
+  // Edit state
+  const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+  // SWR hooks for data
   const { bookmarks, isLoading, error, refreshBookmarks } = useBookmarks({
     query: searchQuery || undefined,
     isFavorite: isFavorite || undefined,
     limit: 50,
   });
+
+  const { categories } = useCategories();
+  const { tags } = useTags();
 
   // Handle search with debouncing (handled by SearchBar component)
   const handleSearch = useCallback((query: string) => {
@@ -30,12 +39,32 @@ export default function BookmarksPage() {
     setIsFavorite(!isFavorite);
   }, [isFavorite]);
 
+  // Handle edit bookmark
+  const handleEditBookmark = useCallback((bookmark: Bookmark) => {
+    setEditingBookmark(bookmark);
+    setEditDialogOpen(true);
+  }, []);
+
+  // Handle edit dialog close
+  const handleEditDialogClose = useCallback((open: boolean) => {
+    if (!open) {
+      setEditingBookmark(null);
+    }
+    setEditDialogOpen(open);
+  }, []);
+
   // Memoize bookmark cards to prevent unnecessary re-renders
   const bookmarkCards = useMemo(() => {
     return bookmarks.map((bookmark) => (
-      <BookmarkCard key={bookmark.id} bookmark={bookmark} />
+      <BookmarkCard
+        key={bookmark.id}
+        bookmark={bookmark}
+        categories={categories}
+        tags={tags}
+        onEdit={handleEditBookmark}
+      />
     ));
-  }, [bookmarks]);
+  }, [bookmarks, categories, tags, handleEditBookmark]);
 
   // Loading state
   if (isLoading) {
@@ -92,11 +121,7 @@ export default function BookmarksPage() {
 
       {/* Search Bar with debouncing */}
       <div className="mb-6">
-        <SearchBar
-          onSearch={handleSearch}
-          placeholder="Search bookmarks..."
-          className="w-full"
-        />
+        <SearchBar onSearch={handleSearch} placeholder="Search bookmarks..." className="w-full" />
       </div>
 
       {/* Bookmarks Grid */}
@@ -107,10 +132,17 @@ export default function BookmarksPage() {
           </p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {bookmarkCards}
-        </div>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">{bookmarkCards}</div>
       )}
+
+      {/* Edit Bookmark Dialog */}
+      <EditBookmarkDialog
+        bookmark={editingBookmark}
+        open={editDialogOpen}
+        onOpenChange={handleEditDialogClose}
+        categories={categories}
+        tags={tags}
+      />
     </div>
   );
 }

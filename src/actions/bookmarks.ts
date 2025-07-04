@@ -9,18 +9,38 @@ import { v4 as uuidv4 } from "uuid";
 import { auth } from "../auth";
 import { createBookmark, deleteBookmark, updateBookmark } from "../lib/dynamodb";
 import { encryptBookmarkData } from "../lib/encryption";
-import { extractMetadata, generateSearchTokens } from "../lib/metadata";
+import { generateSearchTokens } from "../lib/metadata";
 import { CreateBookmarkInput } from "../schemas/bookmark.schema";
 
-export async function createBookmarkAction(data: CreateBookmarkInput) {
+export async function createBookmarkAction(
+  data: CreateBookmarkInput & {
+    metadata?: {
+      title?: string;
+      description?: string;
+      image?: string;
+      favicon?: string;
+      domain?: string;
+    };
+  },
+) {
   const session = await auth();
   if (!session?.user?.email) {
     throw new Error("Authentication required");
   }
 
   try {
-    // Extract metadata from URL
-    const metadata = await extractMetadata(data.url);
+    // Use client-provided metadata or fallback to basic URL info
+    const metadata = data.metadata || {};
+
+    // Extract domain from URL if not provided
+    if (!metadata.domain) {
+      try {
+        const urlObj = new URL(data.url);
+        metadata.domain = urlObj.hostname;
+      } catch {
+        metadata.domain = data.url;
+      }
+    }
 
     // Create bookmark with metadata
     const bookmarkData = {

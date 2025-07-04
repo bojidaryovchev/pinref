@@ -60,7 +60,17 @@ export function useBookmarks(options: BookmarkQueryOptions = { limit: 20 }) {
   };
 
   // Helper function to add a new bookmark
-  const addBookmark = async (bookmarkData: CreateBookmarkInput): Promise<Bookmark> => {
+  const addBookmark = async (
+    bookmarkData: CreateBookmarkInput & {
+      metadata?: {
+        title?: string;
+        description?: string;
+        image?: string;
+        favicon?: string;
+        domain?: string;
+      };
+    },
+  ): Promise<Bookmark> => {
     const result = await createBookmarkAction(bookmarkData);
     await mutate();
     return result.bookmark;

@@ -1,4 +1,8 @@
-import { JSDOM } from "jsdom";
+/**
+ * Client-side metadata extraction to avoid region-based content issues
+ * Server-side metadata extraction is avoided because our eu-central-1 infrastructure
+ * causes many websites to serve German content instead of English
+ */
 
 export interface UrlMetadata {
   title?: string;
@@ -8,81 +12,177 @@ export interface UrlMetadata {
   domain?: string;
 }
 
-export async function extractMetadata(url: string): Promise<UrlMetadata> {
+/**
+ * Check if we're running in a browser environment
+ */
+const isBrowser = typeof window !== "undefined";
+
+/**
+ * Client-side metadata extraction using CORS proxy
+ * This avoids region-based content issues by running in the user's browser
+ */
+export async function extractMetadataClient(url: string): Promise<UrlMetadata> {
   try {
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Cache-Control": "no-cache",
-        "Pragma": "no-cache",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const html = await response.text();
-    const dom = new JSDOM(html);
-    const document = dom.window.document;
-
     const urlObj = new URL(url);
     const domain = urlObj.hostname;
 
-    // Extract title
-    const title =
-      document.querySelector('meta[property="og:title"]')?.getAttribute("content") ||
-      document.querySelector('meta[name="twitter:title"]')?.getAttribute("content") ||
-      document.querySelector("title")?.textContent ||
-      domain;
-
-    // Extract description
-    const description =
-      document.querySelector('meta[property="og:description"]')?.getAttribute("content") ||
-      document.querySelector('meta[name="twitter:description"]')?.getAttribute("content") ||
-      document.querySelector('meta[name="description"]')?.getAttribute("content") ||
-      undefined;
-
-    // Extract image
-    let image =
-      document.querySelector('meta[property="og:image"]')?.getAttribute("content") ||
-      document.querySelector('meta[name="twitter:image"]')?.getAttribute("content") ||
-      undefined;
-
-    // Make image URL absolute if it's relative
-    if (image && !image.startsWith("http")) {
-      image = new URL(image, url).href;
-    }
-
-    // Extract favicon
-    let favicon =
-      document.querySelector('link[rel="icon"]')?.getAttribute("href") ||
-      document.querySelector('link[rel="shortcut icon"]')?.getAttribute("href") ||
-      document.querySelector('link[rel="apple-touch-icon"]')?.getAttribute("href") ||
-      "/favicon.ico";
-
-    // Make favicon URL absolute if it's relative
-    if (favicon && !favicon.startsWith("http")) {
-      favicon = new URL(favicon, url).href;
-    }
-
-    return {
-      title: title?.trim(),
-      description: description?.trim(),
-      image,
-      favicon,
+    // Basic metadata from URL structure
+    const metadata: UrlMetadata = {
       domain,
+      favicon: `https://${domain}/favicon.ico`,
     };
+
+    // Get title from URL path
+    const pathParts = urlObj.pathname.split("/").filter(Boolean);
+    if (pathParts.length > 0) {
+      const lastPart = pathParts[pathParts.length - 1];
+      metadata.title = lastPart.replace(/[-_]/g, " ").replace(/\.[^/.]+$/, "");
+    }
+
+    if (!metadata.title) {
+      metadata.title = domain.replace(/^www\./, "");
+    }
+
+    // Try to enhance with actual page metadata using a CORS proxy
+    try {
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+
+      const response = await fetch(proxyUrl, {
+        headers: {
+          "Accept-Language": "en-US,en;q=0.9",
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const html = data.contents;
+
+        if (html) {
+          // Parse HTML to extract metadata
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, "text/html");
+
+          // Extract title
+          const title =
+            doc.querySelector('meta[property="og:title"]')?.getAttribute("content") ||
+            doc.querySelector('meta[name="twitter:title"]')?.getAttribute("content") ||
+            doc.querySelector("title")?.textContent ||
+            metadata.title;
+
+          // Extract description
+          const description =
+            doc.querySelector('meta[property="og:description"]')?.getAttribute("content") ||
+            doc.querySelector('meta[name="twitter:description"]')?.getAttribute("content") ||
+            doc.querySelector('meta[name="description"]')?.getAttribute("content");
+
+          // Extract image
+          let image =
+            doc.querySelector('meta[property="og:image"]')?.getAttribute("content") ||
+            doc.querySelector('meta[name="twitter:image"]')?.getAttribute("content");
+
+          // Make image URL absolute if it's relative
+          if (image && !image.startsWith("http")) {
+            image = new URL(image, url).href;
+          }
+
+          // Extract favicon
+          let favicon =
+            doc.querySelector('link[rel="icon"]')?.getAttribute("href") ||
+            doc.querySelector('link[rel="shortcut icon"]')?.getAttribute("href") ||
+            metadata.favicon;
+
+          // Make favicon URL absolute if it's relative
+          if (favicon && !favicon.startsWith("http")) {
+            favicon = new URL(favicon, url).href;
+          }
+
+          return {
+            title: title?.trim() || metadata.title,
+            description: description?.trim(),
+            image: image || undefined,
+            favicon,
+            domain: metadata.domain,
+          };
+        }
+      }
+    } catch (proxyError) {
+      console.warn("CORS proxy failed, using basic metadata:", proxyError);
+    }
+
+    return metadata;
   } catch (error) {
-    console.error("Error extracting metadata:", error);
+    console.error("Error extracting client-side metadata:", error);
+
+    // Fallback to basic URL info
+    try {
+      const urlObj = new URL(url);
+      return {
+        title: urlObj.hostname.replace(/^www\./, ""),
+        domain: urlObj.hostname,
+        favicon: `https://${urlObj.hostname}/favicon.ico`,
+      };
+    } catch {
+      return {
+        title: url,
+        domain: url,
+      };
+    }
+  }
+}
+
+/**
+ * Basic metadata extraction from URL structure only
+ * Used as fallback when client-side extraction fails
+ */
+function extractBasicMetadata(url: string): UrlMetadata {
+  try {
     const urlObj = new URL(url);
-    return {
-      title: urlObj.hostname,
-      domain: urlObj.hostname,
+    const domain = urlObj.hostname;
+
+    // Basic metadata from URL structure only
+    const metadata: UrlMetadata = {
+      domain,
+      favicon: `https://${domain}/favicon.ico`,
     };
+
+    // Get title from URL path
+    const pathParts = urlObj.pathname.split("/").filter(Boolean);
+    if (pathParts.length > 0) {
+      const lastPart = pathParts[pathParts.length - 1];
+      metadata.title = lastPart.replace(/[-_]/g, " ").replace(/\.[^/.]+$/, "");
+    }
+
+    if (!metadata.title) {
+      metadata.title = domain.replace(/^www\./, "");
+    }
+
+    return metadata;
+  } catch (error) {
+    console.error("Error extracting basic metadata:", error);
+    return {
+      title: url,
+      domain: url,
+    };
+  }
+}
+
+/**
+ * Client-side only metadata extraction
+ * Always uses client-side extraction to avoid region-based content issues
+ * Falls back to basic URL parsing if client-side extraction fails
+ */
+export async function extractMetadata(url: string): Promise<UrlMetadata> {
+  if (isBrowser) {
+    // Use client-side extraction with CORS proxy to get rich metadata
+    // This uses the user's IP/location, avoiding region-specific content
+    return extractMetadataClient(url);
+  } else {
+    // Server-side: only basic URL parsing, no external requests
+    // This avoids getting German content from our eu-central-1 infrastructure
+    console.warn("Server-side metadata extraction avoided to prevent region-specific content");
+    return extractBasicMetadata(url);
   }
 }
 
