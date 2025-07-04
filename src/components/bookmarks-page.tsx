@@ -1,12 +1,12 @@
 "use client";
 
 import BookmarkCard from "@/components/bookmark-card";
+import SearchBar from "@/components/search-bar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBookmarks } from "@/hooks/use-api";
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 
 export default function BookmarksPage() {
   // Search state
@@ -20,16 +20,22 @@ export default function BookmarksPage() {
     limit: 50,
   });
 
-  // Handle search submission
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    // The SWR hook will automatically refresh with the new query
-  };
+  // Handle search with debouncing (handled by SearchBar component)
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
 
   // Toggle favorite filter
-  const handleToggleFavorite = () => {
+  const handleToggleFavorite = useCallback(() => {
     setIsFavorite(!isFavorite);
-  };
+  }, [isFavorite]);
+
+  // Memoize bookmark cards to prevent unnecessary re-renders
+  const bookmarkCards = useMemo(() => {
+    return bookmarks.map((bookmark) => (
+      <BookmarkCard key={bookmark.id} bookmark={bookmark} />
+    ));
+  }, [bookmarks]);
 
   // Loading state
   if (isLoading) {
@@ -84,30 +90,25 @@ export default function BookmarksPage() {
         </Button>
       </div>
 
-      {/* Search Form */}
-      <form onSubmit={handleSearch} className="mb-6">
-        <div className="flex gap-2">
-          <Input
-            type="search"
-            placeholder="Search bookmarks..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1"
-          />
-          <Button type="submit">Search</Button>
-        </div>
-      </form>
+      {/* Search Bar with debouncing */}
+      <div className="mb-6">
+        <SearchBar
+          onSearch={handleSearch}
+          placeholder="Search bookmarks..."
+          className="w-full"
+        />
+      </div>
 
       {/* Bookmarks Grid */}
       {bookmarks.length === 0 ? (
         <Card className="p-6 text-center">
-          <p className="text-muted-foreground">No bookmarks found.</p>
+          <p className="text-muted-foreground">
+            {searchQuery ? "No bookmarks found for your search." : "No bookmarks found."}
+          </p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {bookmarks.map((bookmark) => (
-            <BookmarkCard key={bookmark.id} bookmark={bookmark} />
-          ))}
+          {bookmarkCards}
         </div>
       )}
     </div>
