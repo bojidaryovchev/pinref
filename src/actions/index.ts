@@ -3,7 +3,7 @@
  */
 
 // Bookmark actions
-export { createBookmarkAction, deleteBookmarkAction, updateBookmarkAction } from "./bookmarks";
+export { createBookmarkAction, deleteBookmarkAction, updateBookmarkAction, extractMetadataAction } from "./bookmarks";
 
 // Category actions
 export { createCategoryAction, deleteCategoryAction, updateCategoryAction } from "./categories";

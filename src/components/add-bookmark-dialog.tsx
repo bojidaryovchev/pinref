@@ -14,7 +14,6 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useBookmarks } from "@/hooks/use-api";
-import { extractMetadataClient } from "@/lib/metadata";
 import { createBookmarkSchema, type CreateBookmarkInput } from "@/schemas/bookmark.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Plus } from "lucide-react";
@@ -53,22 +52,18 @@ const AddBookmarkDialog: React.FC<Props> = ({ categories, tags }) => {
     }
   }, [open, form]);
 
-  // Handle form submission with client-side metadata extraction
+  // Handle form submission with server-side metadata extraction
   const onSubmit = async (data: CreateBookmarkInput) => {
     try {
       setIsLoading(true);
-
-      // Extract metadata on the client side to avoid German content
-      const metadata = await extractMetadataClient(data.url);
 
       // Convert "none" categoryId to undefined
       const bookmarkData = {
         ...data,
         categoryId: data.categoryId === "none" ? undefined : data.categoryId,
-        metadata
       };
 
-      // Add bookmark with metadata included in the data object
+      // Add bookmark with server-side metadata extraction
       await addBookmark(bookmarkData);
 
       toast.success("Bookmark added successfully");

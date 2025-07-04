@@ -1,7 +1,6 @@
 /**
- * Client-side metadata extraction to avoid region-based content issues
- * Server-side metadata extraction is avoided because our eu-central-1 infrastructure
- * causes many websites to serve German content instead of English
+ * Server-side metadata extraction with proper error handling
+ * Uses direct HTTP requests to fetch page metadata
  */
 
 export interface UrlMetadata {
@@ -13,15 +12,10 @@ export interface UrlMetadata {
 }
 
 /**
- * Check if we're running in a browser environment
+ * Server-side metadata extraction using direct HTTP requests
+ * This is more reliable than client-side CORS proxy approaches
  */
-const isBrowser = typeof window !== "undefined";
-
-/**
- * Client-side metadata extraction using CORS proxy
- * This avoids region-based content issues by running in the user's browser
- */
-export async function extractMetadataClient(url: string): Promise<UrlMetadata> {
+export async function extractMetadata(url: string): Promise<UrlMetadata> {
   try {
     const urlObj = new URL(url);
     const domain = urlObj.hostname;
@@ -32,7 +26,7 @@ export async function extractMetadataClient(url: string): Promise<UrlMetadata> {
       favicon: `https://${domain}/favicon.ico`,
     };
 
-    // Get title from URL path
+    // Get title from URL path as fallback
     const pathParts = urlObj.pathname.split("/").filter(Boolean);
     if (pathParts.length > 0) {
       const lastPart = pathParts[pathParts.length - 1];
@@ -43,76 +37,45 @@ export async function extractMetadataClient(url: string): Promise<UrlMetadata> {
       metadata.title = domain.replace(/^www\./, "");
     }
 
-    // Try to enhance with actual page metadata using multiple CORS proxy services
+    // Try to enhance with actual page metadata
     try {
-      // List of CORS proxy services to try as fallbacks
-      const corsProxies = [
-        `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-        `https://corsproxy.io/?${encodeURIComponent(url)}`,
-        `https://cors-anywhere.herokuapp.com/${url}`,
-        `https://thingproxy.freeboard.io/fetch/${url}`,
-      ];
+      const response = await fetch(url, {
+        headers: {
+          "Accept-Language": "en-US,en;q=0.9",
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        },
+        // Add timeout to prevent hanging
+        signal: AbortSignal.timeout(10000), // 10 second timeout
+      });
 
-      let html = null;
-
-      // Try each CORS proxy service
-      for (const proxyUrl of corsProxies) {
-        try {
-          const response = await fetch(proxyUrl, {
-            headers: {
-              "Accept-Language": "en-US,en;q=0.9",
-              "User-Agent":
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-            },
-            // Add timeout to prevent hanging
-            signal: AbortSignal.timeout(10000), // 10 second timeout
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            
-            // Handle different proxy response formats
-            if (proxyUrl.includes('allorigins.win')) {
-              html = data.contents;
-            } else if (proxyUrl.includes('corsproxy.io')) {
-              html = data;
-            } else {
-              html = data;
-            }
-
-            if (html) {
-              console.log(`Successfully fetched metadata using: ${proxyUrl}`);
-              break; // Success! Exit the loop
-            }
-          }
-        } catch (proxyError) {
-          console.warn(`CORS proxy ${proxyUrl} failed:`, proxyError);
-          continue; // Try next proxy
-        }
-      }
-
-      if (html) {
-        // Parse HTML to extract metadata
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, "text/html");
+      if (response.ok) {
+        const html = await response.text();
+        
+        // Parse HTML to extract metadata using simple regex (works in Node.js)
+        const extractMeta = (pattern: RegExp): string | undefined => {
+          const match = html.match(pattern);
+          return match ? match[1].trim() : undefined;
+        };
 
         // Extract title
         const title =
-          doc.querySelector('meta[property="og:title"]')?.getAttribute("content") ||
-          doc.querySelector('meta[name="twitter:title"]')?.getAttribute("content") ||
-          doc.querySelector("title")?.textContent ||
+          extractMeta(/<meta\s+property="og:title"\s+content="([^"]*)"[^>]*>/i) ||
+          extractMeta(/<meta\s+name="twitter:title"\s+content="([^"]*)"[^>]*>/i) ||
+          extractMeta(/<title[^>]*>([^<]+)<\/title>/i) ||
           metadata.title;
 
         // Extract description
         const description =
-          doc.querySelector('meta[property="og:description"]')?.getAttribute("content") ||
-          doc.querySelector('meta[name="twitter:description"]')?.getAttribute("content") ||
-          doc.querySelector('meta[name="description"]')?.getAttribute("content");
+          extractMeta(/<meta\s+property="og:description"\s+content="([^"]*)"[^>]*>/i) ||
+          extractMeta(/<meta\s+name="twitter:description"\s+content="([^"]*)"[^>]*>/i) ||
+          extractMeta(/<meta\s+name="description"\s+content="([^"]*)"[^>]*>/i);
 
         // Extract image
         let image =
-          doc.querySelector('meta[property="og:image"]')?.getAttribute("content") ||
-          doc.querySelector('meta[name="twitter:image"]')?.getAttribute("content");
+          extractMeta(/<meta\s+property="og:image"\s+content="([^"]*)"[^>]*>/i) ||
+          extractMeta(/<meta\s+name="twitter:image"\s+content="([^"]*)"[^>]*>/i);
 
         // Make image URL absolute if it's relative
         if (image && !image.startsWith("http")) {
@@ -121,8 +84,8 @@ export async function extractMetadataClient(url: string): Promise<UrlMetadata> {
 
         // Extract favicon
         let favicon =
-          doc.querySelector('link[rel="icon"]')?.getAttribute("href") ||
-          doc.querySelector('link[rel="shortcut icon"]')?.getAttribute("href") ||
+          extractMeta(/<link\s+rel="icon"\s+href="([^"]*)"[^>]*>/i) ||
+          extractMeta(/<link\s+rel="shortcut icon"\s+href="([^"]*)"[^>]*>/i) ||
           metadata.favicon;
 
         // Make favicon URL absolute if it's relative
@@ -138,13 +101,13 @@ export async function extractMetadataClient(url: string): Promise<UrlMetadata> {
           domain: metadata.domain,
         };
       }
-    } catch (proxyError) {
-      console.warn("All CORS proxies failed, using basic metadata:", proxyError);
+    } catch (fetchError) {
+      console.warn("Failed to fetch metadata from URL:", fetchError);
     }
 
     return metadata;
   } catch (error) {
-    console.error("Error extracting client-side metadata:", error);
+    console.error("Error extracting metadata:", error);
 
     // Fallback to basic URL info
     try {
@@ -160,60 +123,6 @@ export async function extractMetadataClient(url: string): Promise<UrlMetadata> {
         domain: url,
       };
     }
-  }
-}
-
-/**
- * Basic metadata extraction from URL structure only
- * Used as fallback when client-side extraction fails
- */
-function extractBasicMetadata(url: string): UrlMetadata {
-  try {
-    const urlObj = new URL(url);
-    const domain = urlObj.hostname;
-
-    // Basic metadata from URL structure only
-    const metadata: UrlMetadata = {
-      domain,
-      favicon: `https://${domain}/favicon.ico`,
-    };
-
-    // Get title from URL path
-    const pathParts = urlObj.pathname.split("/").filter(Boolean);
-    if (pathParts.length > 0) {
-      const lastPart = pathParts[pathParts.length - 1];
-      metadata.title = lastPart.replace(/[-_]/g, " ").replace(/\.[^/.]+$/, "");
-    }
-
-    if (!metadata.title) {
-      metadata.title = domain.replace(/^www\./, "");
-    }
-
-    return metadata;
-  } catch (error) {
-    console.error("Error extracting basic metadata:", error);
-    return {
-      title: url,
-      domain: url,
-    };
-  }
-}
-
-/**
- * Client-side only metadata extraction
- * Always uses client-side extraction to avoid region-based content issues
- * Falls back to basic URL parsing if client-side extraction fails
- */
-export async function extractMetadata(url: string): Promise<UrlMetadata> {
-  if (isBrowser) {
-    // Use client-side extraction with CORS proxy to get rich metadata
-    // This uses the user's IP/location, avoiding region-specific content
-    return extractMetadataClient(url);
-  } else {
-    // Server-side: only basic URL parsing, no external requests
-    // This avoids getting German content from our eu-central-1 infrastructure
-    console.warn("Server-side metadata extraction avoided to prevent region-specific content");
-    return extractBasicMetadata(url);
   }
 }
 

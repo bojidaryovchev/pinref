@@ -9,19 +9,31 @@ import { v4 as uuidv4 } from "uuid";
 import { auth } from "../auth";
 import { createBookmark, deleteBookmark, updateBookmark } from "../lib/dynamodb";
 import { encryptBookmarkData } from "../lib/encryption";
-import { generateSearchTokens } from "../lib/metadata";
+import { extractMetadata, generateSearchTokens, type UrlMetadata } from "../lib/metadata";
 import { CreateBookmarkInput } from "../schemas/bookmark.schema";
 
+/**
+ * Server action to extract metadata from a URL
+ * This runs on the server to avoid CORS issues and German content problems
+ */
+export async function extractMetadataAction(url: string) {
+  const session = await auth();
+  if (!session?.user?.email) {
+    throw new Error("Authentication required");
+  }
+
+  try {
+    const metadata = await extractMetadata(url);
+    return { success: true, metadata };
+  } catch (error) {
+    console.error("Error extracting metadata:", error);
+    throw new Error("Failed to extract metadata");
+  }
+}
+
 export async function createBookmarkAction(
-  data: CreateBookmarkInput & {
-    metadata?: {
-      title?: string;
-      description?: string;
-      image?: string;
-      favicon?: string;
-      domain?: string;
-    };
-  },
+  data: CreateBookmarkInput,
+  skipMetadataExtraction: boolean = false,
 ) {
   const session = await auth();
   if (!session?.user?.email) {
@@ -29,8 +41,26 @@ export async function createBookmarkAction(
   }
 
   try {
-    // Use client-provided metadata or fallback to basic URL info
-    const metadata = data.metadata || {};
+    // Extract metadata on the server side unless explicitly skipped
+    let metadata: UrlMetadata = {};
+    if (!skipMetadataExtraction) {
+      try {
+        metadata = await extractMetadata(data.url);
+      } catch (error) {
+        console.warn("Failed to extract metadata, using fallback:", error);
+        // Use basic URL info as fallback
+        try {
+          const urlObj = new URL(data.url);
+          metadata = {
+            domain: urlObj.hostname,
+            favicon: `https://${urlObj.hostname}/favicon.ico`,
+            title: urlObj.hostname.replace(/^www\./, ""),
+          };
+        } catch {
+          metadata = { domain: data.url };
+        }
+      }
+    }
 
     // Extract domain from URL if not provided
     if (!metadata.domain) {
