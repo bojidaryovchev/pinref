@@ -1,5 +1,22 @@
 /**
- * SWR hooks for data fetching with automatic revalidation
+ * SWR hooks for data fetching with a  const { data, error, isLoading, mutate } = useSWR<{
+    bookmarks: Bookmark[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  }>(url, fetcher, {
+    refreshInterval: SWR_CONFIG.REFRESH_INTERVAL,
+    revalidateOnFocus: SWR_CONFIG.REVALIDATE_ON_FOCUS,
+    revalidateOnReconnect: SWR_CONFIG.REVALIDATE_ON_RECONNECT,
+    dedupingInterval: SWR_CONFIG.DEDUPING_INTERVAL,
+    // Don't revalidate on mount if we have cached data
+    revalidateIfStale: false,
+    // Don't keep previous data when search query changes - this was causing the issue
+    keepPreviousData: false,
+  });ion
  */
 
 import {
@@ -23,6 +40,7 @@ import type { UpdateUserSettingsInput } from "@/schemas/user-settings.schema";
 import type { UserSettings } from "@/schemas/user.schema";
 import { fetcher } from "@/swr";
 import useSWR from "swr";
+import { mutate as globalMutate } from "swr";
 
 /**
  * Hook for bookmark data with optional filtering
@@ -76,7 +94,13 @@ export function useBookmarks(options: BookmarkQueryOptions = { limit: 20 }) {
     },
   ): Promise<Bookmark> => {
     const result = await createBookmarkAction(bookmarkData);
+    
+    // Invalidate all bookmark-related cache keys
     await mutate();
+    
+    // Also invalidate cache for other bookmark queries that might be affected
+    await globalMutate(key => key && typeof key === 'string' && key.startsWith('/api/bookmarks'));
+    
     return result.bookmark;
   };
 
@@ -84,18 +108,24 @@ export function useBookmarks(options: BookmarkQueryOptions = { limit: 20 }) {
   const updateBookmarkItem = async (id: string, bookmarkData: Partial<CreateBookmarkInput>): Promise<void> => {
     await updateBookmarkAction(id, bookmarkData);
     await mutate();
+    // Invalidate all bookmark caches
+    await globalMutate(key => key && typeof key === 'string' && key.startsWith('/api/bookmarks'));
   };
 
   // Helper function to delete a bookmark
   const removeBookmark = async (id: string): Promise<void> => {
     await deleteBookmarkAction(id);
     await mutate();
+    // Invalidate all bookmark caches
+    await globalMutate(key => key && typeof key === 'string' && key.startsWith('/api/bookmarks'));
   };
 
   // Helper function to toggle favorite status
   const toggleFavorite = async (id: string, isFavorite: boolean): Promise<void> => {
     await updateBookmarkAction(id, { isFavorite });
     await mutate();
+    // Invalidate all bookmark caches
+    await globalMutate(key => key && typeof key === 'string' && key.startsWith('/api/bookmarks'));
   };
 
   return {

@@ -121,7 +121,12 @@ export default function BookmarksPage() {
 
       {/* Search Bar with debouncing */}
       <div className="mb-6">
-        <SearchBar onSearch={handleSearch} placeholder="Search bookmarks..." className="w-full" />
+        <SearchBar 
+          key="bookmark-search"
+          onSearch={handleSearch} 
+          placeholder="Search bookmarks..." 
+          className="w-full" 
+        />
       </div>
 
       {/* Bookmarks Grid */}
