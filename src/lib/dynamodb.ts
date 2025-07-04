@@ -55,6 +55,8 @@ export const createSearchIndexEntries = async (userId: string, bookmarkId: strin
         Item: {
           PK: createPK(ENTITY_TYPES.SEARCH_INDEX, `${userId}#${token}`),
           SK: createSK(ENTITY_TYPES.SEARCH_INDEX, bookmarkId),
+          GSI1PK: createGSI1PK(userId),
+          GSI1SK: createGSI1SK(ENTITY_TYPES.SEARCH_INDEX, new Date().toISOString()),
           userId, // For the GSI
           token, // For the GSI
           bookmarkId,
@@ -79,15 +81,17 @@ export const createSearchIndexEntries = async (userId: string, bookmarkId: strin
  * Delete search index entries for a bookmark
  */
 export const deleteSearchIndexEntries = async (userId: string, bookmarkId: string) => {
-  // First query to find all index entries for this bookmark
+  // Query search index entries using GSI1
   const params: DynamoDBParams = {
     TableName: TABLE_NAME,
-    KeyConditionExpression: "userId = :userId AND begins_with(SK, :skPrefix)",
+    IndexName: "GSI1",
+    KeyConditionExpression: "GSI1PK = :gsi1pk AND begins_with(GSI1SK, :gsi1sk)",
+    FilterExpression: "bookmarkId = :bookmarkId",
     ExpressionAttributeValues: {
-      ":userId": userId,
-      ":skPrefix": createSK(ENTITY_TYPES.SEARCH_INDEX, bookmarkId),
+      ":gsi1pk": createGSI1PK(userId),
+      ":gsi1sk": createGSI1SK(ENTITY_TYPES.SEARCH_INDEX),
+      ":bookmarkId": bookmarkId,
     },
-    IndexName: "UserEntitiesIndex",
   };
 
   // Get all index entries
