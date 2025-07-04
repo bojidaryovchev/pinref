@@ -34,7 +34,7 @@ export const CACHE_TAGS = {
 // Example GET function with cache tag
 export const getBookmarks = async () => {
   const response = await fetch(API_ENDPOINTS.BOOKMARKS, {
-    next: { tags: [CACHE_TAGS.BOOKMARKS] } // Add tag for cache invalidation
+    next: { tags: [CACHE_TAGS.BOOKMARKS] }, // Add tag for cache invalidation
   });
   return response.json();
 };
@@ -49,10 +49,10 @@ export const createBookmark = async (data) => {
     method: "POST",
     body: JSON.stringify(data),
   });
-  
+
   // Invalidate bookmarks cache after creating a bookmark
   invalidateBookmarksCache();
-  
+
   return response.json();
 };
 ```
@@ -68,12 +68,12 @@ export const updateCategory = async (id, data) => {
     method: "PUT",
     body: JSON.stringify(data),
   });
-  
+
   // Invalidate categories cache
   invalidateCategoriesCache();
   // Also invalidate bookmarks cache as they might display category info
   invalidateBookmarksCache();
-  
+
   return response.json();
 };
 ```
@@ -122,8 +122,8 @@ const nextConfig: NextConfig = {
     ],
     domains: [
       // Common favicon domains
-      'www.google.com',
-      'www.youtube.com',
+      "www.google.com",
+      "www.youtube.com",
       // ...and more
     ],
   },

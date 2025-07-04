@@ -4,14 +4,16 @@ This document explains the URL handling approach used in Pinref, particularly in
 
 ## Problem
 
-When using Next.js server actions, URL parsing issues can occur, especially in deployment environments. 
+When using Next.js server actions, URL parsing issues can occur, especially in deployment environments.
 This happens because server actions execute on the server and need to make fetch requests to API routes.
 
 Common errors include:
+
 - `TypeError: Failed to parse URL from /api/bookmarks`
 - `TypeError: fetch failed` with `ECONNREFUSED 127.0.0.1:3000`
 
 These errors occur because:
+
 1. Relative URLs in server actions don't have a base URL to resolve against
 2. In deployment environments, localhost URLs don't work
 
@@ -24,6 +26,7 @@ We've implemented a comprehensive solution with these components:
 In `src/lib/env.ts`, we provide utilities for working with URLs:
 
 - `getSiteUrl()`: Determines the base URL based on the current environment:
+
   - Falls back to environment-specific logic (dev vs production)
   - Properly handles different stages in the SST deployment
 

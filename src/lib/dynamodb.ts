@@ -771,3 +771,102 @@ export const rebuildSearchIndex = async (userId: string): Promise<{ success: boo
     return { success: false, count: 0 };
   }
 };
+
+/**
+ * Count bookmarks by category for a user
+ */
+export const countBookmarksByCategory = async (userId: string): Promise<Record<string, number>> => {
+  const result = await dynamodb.send(
+    new QueryCommand({
+      TableName: TABLE_NAME,
+      IndexName: "GSI1",
+      KeyConditionExpression: "GSI1PK = :gsi1pk AND begins_with(GSI1SK, :gsi1sk)",
+      ExpressionAttributeValues: {
+        ":gsi1pk": createGSI1PK(userId),
+        ":gsi1sk": createGSI1SK(ENTITY_TYPES.BOOKMARK),
+      },
+      ProjectionExpression: "categoryId",
+    }),
+  );
+
+  const bookmarks = result.Items || [];
+  const categoryCounts: Record<string, number> = {};
+
+  // Count bookmarks by category
+  for (const bookmark of bookmarks) {
+    const categoryId = bookmark.categoryId as string;
+    if (categoryId) {
+      categoryCounts[categoryId] = (categoryCounts[categoryId] || 0) + 1;
+    } else {
+      // Count uncategorized bookmarks
+      categoryCounts["uncategorized"] = (categoryCounts["uncategorized"] || 0) + 1;
+    }
+  }
+
+  return categoryCounts;
+};
+
+/**
+ * Count bookmarks by tag for a user
+ */
+export const countBookmarksByTag = async (userId: string): Promise<Record<string, number>> => {
+  const result = await dynamodb.send(
+    new QueryCommand({
+      TableName: TABLE_NAME,
+      IndexName: "GSI1",
+      KeyConditionExpression: "GSI1PK = :gsi1pk AND begins_with(GSI1SK, :gsi1sk)",
+      ExpressionAttributeValues: {
+        ":gsi1pk": createGSI1PK(userId),
+        ":gsi1sk": createGSI1SK(ENTITY_TYPES.BOOKMARK),
+      },
+      ProjectionExpression: "tagIds",
+    }),
+  );
+
+  const bookmarks = result.Items || [];
+  const tagCounts: Record<string, number> = {};
+
+  // Count bookmarks by tag
+  for (const bookmark of bookmarks) {
+    const tagIds = bookmark.tagIds as string[] || [];
+    for (const tagId of tagIds) {
+      tagCounts[tagId] = (tagCounts[tagId] || 0) + 1;
+    }
+  }
+
+  return tagCounts;
+};
+
+/**
+ * Get categories with bookmark counts for a user
+ */
+export const getCategoriesWithCounts = async (userId: string) => {
+  const [categories, categoryCounts] = await Promise.all([
+    getUserCategories(userId),
+    countBookmarksByCategory(userId),
+  ]);
+
+  return categories.map((category) => ({
+    ...category,
+    _count: {
+      bookmarks: categoryCounts[category.id] || 0,
+    },
+  }));
+};
+
+/**
+ * Get tags with bookmark counts for a user
+ */
+export const getTagsWithCounts = async (userId: string) => {
+  const [tags, tagCounts] = await Promise.all([
+    getUserTags(userId),
+    countBookmarksByTag(userId),
+  ]);
+
+  return tags.map((tag) => ({
+    ...tag,
+    _count: {
+      bookmarks: tagCounts[tag.id] || 0,
+    },
+  }));
+};
