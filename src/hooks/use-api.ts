@@ -54,8 +54,8 @@ export function useBookmarks(options: BookmarkQueryOptions = { limit: 20 }) {
     dedupingInterval: SWR_CONFIG.DEDUPING_INTERVAL,
     // Don't revalidate on mount if we have cached data
     revalidateIfStale: false,
-    // Keep previous data when key changes (prevents flickering)
-    keepPreviousData: true,
+    // Don't keep previous data when key changes to avoid flickering with search
+    keepPreviousData: false,
   });
 
   // Helper function to refresh data

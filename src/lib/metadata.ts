@@ -215,8 +215,8 @@ export function generateSearchTokens(text: string): string[] {
 /**
  * Generate search tokens for a query to match against stored n-grams
  *
- * This version prioritizes exact phrase matching while still maintaining
- * good fuzzy search capabilities.
+ * This version prioritizes exact word matching and only uses fuzzy matching
+ * for short queries or when whole words don't match.
  */
 export function generateQueryTokens(query: string): string[] {
   if (!query) return [];
@@ -224,41 +224,52 @@ export function generateQueryTokens(query: string): string[] {
   const normalizedQuery = query.toLowerCase().trim();
   const tokens = new Set<string>();
 
-  // Create a structure to track token types for scoring
-  const exactPhraseToken = `__exact__:${normalizedQuery}`;
-
   // Add the exact phrase token with a special prefix for exact matching
-  tokens.add(exactPhraseToken);
+  tokens.add(`__exact__:${normalizedQuery}`);
 
-  // Add the full query as is (still important)
+  // Add the full query as is (important for phrase matching)
   tokens.add(normalizedQuery);
 
-  // Add individual words
+  // Split into words and prioritize whole word matching
   const words = normalizedQuery.split(/\s+/).filter((word) => word.length > 0);
+  
+  // Add individual words (highest priority for user searches)
   for (const word of words) {
     if (word.length >= 2) {
       tokens.add(word);
+    }
+  }
 
-      // Only add prefixes for words 3+ characters to reduce noise
-      if (word.length >= 3) {
-        // Add prefixes of each word for autocomplete-style matching
-        // But limit to meaningful prefixes (at least 3 characters)
-        for (let i = 3; i <= word.length; i++) {
-          tokens.add(word.slice(0, i));
+  // Add word combinations for multi-word queries
+  if (words.length > 1) {
+    for (let i = 0; i < words.length; i++) {
+      for (let j = i + 1; j <= Math.min(i + 3, words.length); j++) {
+        const wordPhrase = words.slice(i, j).join(" ");
+        if (wordPhrase.length <= 50) {
+          tokens.add(wordPhrase);
         }
       }
     }
   }
 
-  // Reduce the number of n-grams to minimize noise
-  // Only generate n-grams for short queries (less than 3 words)
-  if (words.length < 3) {
-    // Add character n-grams for partial matching
-    // More selective - only 3-5 character n-grams
-    for (let i = 0; i < normalizedQuery.length; i++) {
-      for (let j = i + 3; j <= Math.min(i + 5, normalizedQuery.length); j++) {
-        const ngram = normalizedQuery.slice(i, j);
-        if (!ngram.match(/^\s+$/) && !ngram.match(/\s{2,}/)) {
+  // Only add prefix matching for longer words to help with autocomplete
+  for (const word of words) {
+    if (word.length >= 4) {
+      // Add meaningful prefixes (at least 3 characters)
+      for (let i = 3; i <= word.length - 1; i++) {
+        tokens.add(word.slice(0, i));
+      }
+    }
+  }
+
+  // Only add character n-grams for very short queries (single short words)
+  // This helps with typos but doesn't interfere with normal word searches
+  if (words.length === 1 && words[0].length <= 4) {
+    const word = words[0];
+    for (let i = 0; i < word.length; i++) {
+      for (let j = i + 2; j <= Math.min(i + 4, word.length); j++) {
+        const ngram = word.slice(i, j);
+        if (ngram.length >= 2) {
           tokens.add(ngram);
         }
       }

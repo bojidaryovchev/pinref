@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import type { Bookmark } from "@/schemas/bookmark.schema";
 import { Edit, ExternalLink, Folder, Heart, Tag, Trash2 } from "lucide-react";
 import Image from "next/image";
-import { memo, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 interface Props {
@@ -22,7 +22,14 @@ const BookmarkCard: React.FC<Props> = ({ bookmark, categories = [], tags = [], o
   const [imageError, setImageError] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  // Local state for optimistic updates
+  const [localIsFavorite, setLocalIsFavorite] = useState(bookmark.isFavorite);
   const { removeBookmark, toggleFavorite } = useBookmarks();
+
+  // Sync local state with bookmark prop changes
+  useEffect(() => {
+    setLocalIsFavorite(bookmark.isFavorite);
+  }, [bookmark.isFavorite]);
 
   const handleImageError = () => setImageError(true);
 
@@ -32,10 +39,17 @@ const BookmarkCard: React.FC<Props> = ({ bookmark, categories = [], tags = [], o
 
   const handleFavoriteToggle = async () => {
     setIsProcessing(true);
+    const newFavoriteState = !localIsFavorite;
+    
+    // Optimistic update
+    setLocalIsFavorite(newFavoriteState);
+    
     try {
-      await toggleFavorite(bookmark.id, !bookmark.isFavorite);
-      toast.success(bookmark.isFavorite ? "Removed from favorites" : "Added to favorites");
+      await toggleFavorite(bookmark.id, newFavoriteState);
+      toast.success(newFavoriteState ? "Added to favorites" : "Removed from favorites");
     } catch (e) {
+      // Revert optimistic update on error
+      setLocalIsFavorite(localIsFavorite);
       const err = e as Error;
       toast.error(err.message || "Failed to update favorite");
     } finally {
@@ -94,16 +108,16 @@ const BookmarkCard: React.FC<Props> = ({ bookmark, categories = [], tags = [], o
           size="sm"
           className={cn(
             "absolute top-2 right-2 h-8 w-8 p-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100",
-            bookmark.isFavorite && "opacity-100",
+            localIsFavorite && "opacity-100",
           )}
           onClick={handleFavoriteToggle}
           disabled={isProcessing}
-          aria-label={bookmark.isFavorite ? "Remove from favorites" : "Add to favorites"}
+          aria-label={localIsFavorite ? "Remove from favorites" : "Add to favorites"}
         >
           <Heart
             className={cn(
               "h-4 w-4 transition-colors",
-              bookmark.isFavorite ? "fill-red-500 text-red-500" : "text-white hover:text-red-500",
+              localIsFavorite ? "fill-red-500 text-red-500" : "text-white hover:text-red-500",
             )}
           />
         </Button>
