@@ -828,7 +828,7 @@ export const countBookmarksByTag = async (userId: string): Promise<Record<string
 
   // Count bookmarks by tag
   for (const bookmark of bookmarks) {
-    const tagIds = bookmark.tagIds as string[] || [];
+    const tagIds = (bookmark.tagIds as string[]) || [];
     for (const tagId of tagIds) {
       tagCounts[tagId] = (tagCounts[tagId] || 0) + 1;
     }
@@ -841,10 +841,7 @@ export const countBookmarksByTag = async (userId: string): Promise<Record<string
  * Get categories with bookmark counts for a user
  */
 export const getCategoriesWithCounts = async (userId: string) => {
-  const [categories, categoryCounts] = await Promise.all([
-    getUserCategories(userId),
-    countBookmarksByCategory(userId),
-  ]);
+  const [categories, categoryCounts] = await Promise.all([getUserCategories(userId), countBookmarksByCategory(userId)]);
 
   return categories.map((category) => ({
     ...category,
@@ -858,10 +855,7 @@ export const getCategoriesWithCounts = async (userId: string) => {
  * Get tags with bookmark counts for a user
  */
 export const getTagsWithCounts = async (userId: string) => {
-  const [tags, tagCounts] = await Promise.all([
-    getUserTags(userId),
-    countBookmarksByTag(userId),
-  ]);
+  const [tags, tagCounts] = await Promise.all([getUserTags(userId), countBookmarksByTag(userId)]);
 
   return tags.map((tag) => ({
     ...tag,

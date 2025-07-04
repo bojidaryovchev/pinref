@@ -151,7 +151,7 @@ export function generateSearchTokens(text: string): string[] {
 
 /**
  * Generate search tokens for a query to match against stored n-grams
- * 
+ *
  * This version prioritizes exact phrase matching while still maintaining
  * good fuzzy search capabilities.
  */
@@ -163,10 +163,10 @@ export function generateQueryTokens(query: string): string[] {
 
   // Create a structure to track token types for scoring
   const exactPhraseToken = `__exact__:${normalizedQuery}`;
-  
+
   // Add the exact phrase token with a special prefix for exact matching
   tokens.add(exactPhraseToken);
-  
+
   // Add the full query as is (still important)
   tokens.add(normalizedQuery);
 
@@ -175,7 +175,7 @@ export function generateQueryTokens(query: string): string[] {
   for (const word of words) {
     if (word.length >= 2) {
       tokens.add(word);
-  
+
       // Only add prefixes for words 3+ characters to reduce noise
       if (word.length >= 3) {
         // Add prefixes of each word for autocomplete-style matching
